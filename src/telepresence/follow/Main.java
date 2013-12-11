@@ -4,12 +4,12 @@ import static com.googlecode.javacv.cpp.opencv_core.CV_AA;
 import static com.googlecode.javacv.cpp.opencv_core.CV_WHOLE_SEQ;
 import static com.googlecode.javacv.cpp.opencv_core.cvAddS;
 import static com.googlecode.javacv.cpp.opencv_core.cvCreateImage;
-import static com.googlecode.javacv.cpp.opencv_core.cvDrawContours;
 import static com.googlecode.javacv.cpp.opencv_core.cvDrawCircle;
-import static com.googlecode.javacv.cpp.opencv_core.cvMul;
-import static com.googlecode.javacv.cpp.opencv_core.cvScaleAdd;
-import static com.googlecode.javacv.cpp.opencv_core.cvSplit;
+import static com.googlecode.javacv.cpp.opencv_core.cvDrawContours;
 import static com.googlecode.javacv.cpp.opencv_core.cvGetSeqElem;
+import static com.googlecode.javacv.cpp.opencv_core.cvMul;
+import static com.googlecode.javacv.cpp.opencv_core.cvReleaseImage;
+import static com.googlecode.javacv.cpp.opencv_core.cvSplit;
 import static com.googlecode.javacv.cpp.opencv_imgproc.CV_BGR2HSV;
 import static com.googlecode.javacv.cpp.opencv_imgproc.CV_CHAIN_APPROX_SIMPLE;
 import static com.googlecode.javacv.cpp.opencv_imgproc.CV_POLY_APPROX_DP;
@@ -94,13 +94,25 @@ public class Main {
 				IplImage hueSaturation = cvCreateImage(size, depth, 1);
 				cvMul(hue, saturation, hueSaturation, 255);
 				
-//				ObjectParameters maxAreaObjectParameters = detectObjects(hueSaturation, image);
-//				if (maxAreaObjectParameters != null) {
-//					cvDrawCircle(image, new CvPoint((byte)1, maxAreaObjectParameters.getXCenter(), maxAreaObjectParameters.getXCenter()), 1, CvScalar.YELLOW, 20, CV_AA, 0);
-//				}
+				ObjectParameters maxAreaObjectParameters = detectObjects(hueSaturation, image);
+				if (maxAreaObjectParameters != null) {
+					cvDrawCircle(image, new CvPoint((byte)1, maxAreaObjectParameters.getXCenter(), maxAreaObjectParameters.getXCenter()), 1, CvScalar.YELLOW, 20, CV_AA, 0);
+				}
 				
 				canvasFrame.showImage(hueSaturation);
 				hsvFrame.showImage(hsvImage);
+				
+				cvReleaseImage(brighteness);
+				cvReleaseImage(hsvImage);
+				cvReleaseImage(hueChannel);
+				cvReleaseImage(saturationChannel);
+				cvReleaseImage(hueLow);
+				cvReleaseImage(hueHigh);
+				cvReleaseImage(hue);
+				cvReleaseImage(saturationLow);
+				cvReleaseImage(saturationHigh);
+				cvReleaseImage(saturation);
+				cvReleaseImage(hueSaturation);
 			}
 			
 			frame = (frame + 1) % frameRate;
