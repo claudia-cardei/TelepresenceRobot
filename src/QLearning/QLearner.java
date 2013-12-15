@@ -293,10 +293,10 @@ public class QLearner implements Constants {
 		System.out.println("Average steps: " + (double)totalSteps / 100);*/
 
 		// Restarting point
-		rx1 = 0;
-		ry1 = 0;
-		rx2 = 0;
-		ry2 = 0;
+		rx1 = 15;
+		ry1 = 6;
+		rx2 = 20;
+		ry2 = 9;
 				
 		i = 0;
 		// For every possible position for the first objective
@@ -312,19 +312,22 @@ public class QLearner implements Constants {
 						
 						// Check if the distance is within the boundaries and if the second objective is where it
 						// should be.
-						if ( distance >= SECOND_SQUARES_SIDE - 2 && distance <= SECOND_SQUARES_SIDE + 2 
+						if ( distance >= SECOND_SQUARES_SIDE - 2 
+								&& distance <= SECOND_SQUARES_SIDE + 2 
 								&& !( x2 >= SECOND_SQUARES_SIDE && x2 <= SECOND_SQUARES_SIDE + 2 * FIRST_SQUARES_SIDE
-										&& y2 >= SECOND_SQUARES_UP && y2 <= SECOND_SQUARES_UP + FIRST_SQUARES_UP ) ) {
+										&& y2 >= SECOND_SQUARES_UP && y2 <= SECOND_SQUARES_UP + FIRST_SQUARES_UP )
+								// Don't allow the second objective to be lower than the first
+								&& y2 <= y1 ) {
 							
 							// Restart from a certain point
 							if ( y1 > ry1 
 									|| (y1 == ry1 && x1 > rx1)
 									|| (y1 == ry1 && x1 == rx1 && y2 > ry2) 
 									|| (y1 == ry1 && x1 == rx1 && y2 == ry2 && x2 > rx2) ) {
-							
+								
 								// For each combination of objectives run the algorithm NR_RUNS times
 								for (k = 0; k < NR_RUNS; k++) {
-									
+
 									learner.learn(x1 * SQUARE_SIZE + SQUARE_SIZE / 2, 
 											y1 * SQUARE_SIZE + SQUARE_SIZE / 2, 
 											x2 * SQUARE_SIZE + SQUARE_SIZE / 2, 
