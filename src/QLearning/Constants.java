@@ -1,6 +1,5 @@
 package QLearning;
 
-
 public interface Constants {
 
 	// Robot

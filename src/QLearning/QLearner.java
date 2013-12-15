@@ -293,10 +293,10 @@ public class QLearner implements Constants {
 		System.out.println("Average steps: " + (double)totalSteps / 100);*/
 
 		// Restarting point
-		rx1 = 15;
-		ry1 = 6;
-		rx2 = 20;
-		ry2 = 9;
+		rx1 = 0;
+		ry1 = 0;
+		rx2 = 0;
+		ry2 = 0;
 				
 		i = 0;
 		// For every possible position for the first objective

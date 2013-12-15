@@ -1,6 +1,5 @@
 package QLearning;
 
-
 /**
  * Values related to an action.
  * @author Filip

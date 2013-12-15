@@ -1,6 +1,5 @@
 package QLearning;
 
-
 /**
  * Values related to the position of an objective or the robot
  * @author Filip

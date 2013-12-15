@@ -1,5 +1,4 @@
 package QLearning;
-
 import java.util.ArrayList;
 
 /**
@@ -91,16 +90,22 @@ public class State implements Constants {
 	public boolean checkAction(Action action) {
 		Position pos = action.getMovement(robot.angle);
 		double dx = pos.getX(), dy = pos.getY();
-		double firstX, firstY;
+		double firstX, firstY, secondX, secondY;
 		
 		// Check movement
 		firstX = firstObjective.getX() - dx;
 		firstY = firstObjective.getY() + dy;
+		secondX = secondObjective.getX() - dx;
+		secondY = secondObjective.getY() + dy;
 			
 		if ( firstX < SECOND_SQUARES_SIDE * SQUARE_SIZE + SQUARE_SIZE / 2 
 				|| firstX > (2 * FIRST_SQUARES_SIDE + SECOND_SQUARES_SIDE) * SQUARE_SIZE + SQUARE_SIZE / 2
 				|| firstY < SECOND_SQUARES_UP * SQUARE_SIZE + SQUARE_SIZE / 2
-				|| firstY > (SECOND_SQUARES_UP + FIRST_SQUARES_UP + FIRST_SQUARES_DOWN) * SQUARE_SIZE + SQUARE_SIZE / 2  )
+				|| firstY > (SECOND_SQUARES_UP + FIRST_SQUARES_UP + FIRST_SQUARES_DOWN) * SQUARE_SIZE + SQUARE_SIZE / 2 
+				|| secondX < SQUARE_SIZE / 2
+				|| secondX > (2 * SECOND_SQUARES_SIDE + 2 * FIRST_SQUARES_SIDE) * SQUARE_SIZE + SQUARE_SIZE
+				|| secondY < SQUARE_SIZE / 2
+				|| secondY > (SECOND_SQUARES_UP + FIRST_SQUARES_UP + FIRST_SQUARES_DOWN + SECOND_SQUARES_DOWN) * SQUARE_SIZE + SQUARE_SIZE / 2 )
 			return false;
 				
 		// Check angle
