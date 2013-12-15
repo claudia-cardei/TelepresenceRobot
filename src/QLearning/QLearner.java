@@ -267,7 +267,7 @@ public class QLearner implements Constants {
 	
 	
 	/**
-	 * Main method, used to launch different scenrios
+	 * Main method, used to launch different scenarios
 	 * @param args
 	 */
 	public static void main(String[] args) {
