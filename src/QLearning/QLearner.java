@@ -1,5 +1,4 @@
 package QLearning;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -66,9 +65,8 @@ public class QLearner implements Constants {
 	
 	/**
 	 * Write the Q to a file
-	 * @param fileName the name of the file
 	 */
-	public void writeQ(String fileName) {
+	public void writeQ() {
 
 		try {
 			PrintWriter pr = new PrintWriter(new File(fileName));
@@ -264,9 +262,6 @@ public class QLearner implements Constants {
 			steps++;			
 		}
 		
-		// Write the new Q to a file
-		writeQ(fileName);
-		
 		return steps;
 	}
 	
@@ -277,7 +272,7 @@ public class QLearner implements Constants {
 	 */
 	public static void main(String[] args) {
 		QLearner learner = new QLearner("q.txt");
-		int y1, y2, x1, x2, k;
+		int i, y1, y2, x1, x2, k, rx1, rx2, ry1, ry2;
 		double distance;
 		
 		/*i1 = (SECOND_SQUARES_SIDE + FIRST_SQUARES_SIDE) * SQUARE_SIZE + SQUARE_SIZE / 2; 
@@ -296,8 +291,14 @@ public class QLearner implements Constants {
 		}
 		
 		System.out.println("Average steps: " + (double)totalSteps / 100);*/
-		
+
+		// Restarting point
+		rx1 = 0;
+		ry1 = 0;
+		rx2 = 0;
+		ry2 = 0;
 				
+		i = 0;
 		// For every possible position for the first objective
 		for (y1 = SECOND_SQUARES_UP; y1 < SECOND_SQUARES_UP + FIRST_SQUARES_UP + 1 + FIRST_SQUARES_DOWN; y1++) {
 			for (x1 = SECOND_SQUARES_SIDE; x1 < SECOND_SQUARES_SIDE + 2 * FIRST_SQUARES_SIDE + 1; x1++) {
@@ -315,16 +316,30 @@ public class QLearner implements Constants {
 								&& !( x2 >= SECOND_SQUARES_SIDE && x2 <= SECOND_SQUARES_SIDE + 2 * FIRST_SQUARES_SIDE
 										&& y2 >= SECOND_SQUARES_UP && y2 <= SECOND_SQUARES_UP + FIRST_SQUARES_UP ) ) {
 							
-							// For each combination of objectives run the algorithm NR_RUNS times
-							for (k = 0; k < NR_RUNS; k++) {
-								
-								learner.learn(x1 * SQUARE_SIZE + SQUARE_SIZE / 2, 
-										y1 * SQUARE_SIZE + SQUARE_SIZE / 2, 
-										x2 * SQUARE_SIZE + SQUARE_SIZE / 2, 
-										y2 * SQUARE_SIZE + SQUARE_SIZE / 2);
-							}
+							// Restart from a certain point
+							if ( y1 > ry1 
+									|| (y1 == ry1 && x1 > rx1)
+									|| (y1 == ry1 && x1 == rx1 && y2 > ry2) 
+									|| (y1 == ry1 && x1 == rx1 && y2 == ry2 && x2 > rx2) ) {
 							
-							System.out.println("Combination:  First("+x1+","+y1+") Second("+x2+","+y2+")");
+								// For each combination of objectives run the algorithm NR_RUNS times
+								for (k = 0; k < NR_RUNS; k++) {
+									
+									learner.learn(x1 * SQUARE_SIZE + SQUARE_SIZE / 2, 
+											y1 * SQUARE_SIZE + SQUARE_SIZE / 2, 
+											x2 * SQUARE_SIZE + SQUARE_SIZE / 2, 
+											y2 * SQUARE_SIZE + SQUARE_SIZE / 2);
+								}
+								
+								System.out.println("Combination:  First("+x1+","+y1+") Second("+x2+","+y2+")");
+								i++;
+								
+								// Write the new Q to a file
+								if ( i % 10 == 0 ) {
+									learner.writeQ();
+									System.out.println("Write file.");
+								}
+							}
 						}
 					}
 				}
