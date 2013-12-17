@@ -36,8 +36,8 @@ import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
 public class BlobDetector {
 	
-	private static final int BRIGHTENESS_SCALAR = 80;
-	private static final int CONTRAST_SCALAR = 2;
+	private static final int BRIGHTENESS_SCALAR = 0;
+	private static final int CONTRAST_SCALAR = 1;
 	
 	private static final int LOW_HUE_THRESH = 60;
 	private static final int HIGH_HUE_THRESH = 90;
@@ -56,7 +56,7 @@ public class BlobDetector {
 	}
 	
 	public BlobParameters detectBlobColor(IplImage image) {
-	    //adjustBrightenessAndContrast(image, BRIGHTENESS_SCALAR, CONTRAST_SCALAR);
+	    adjustBrightenessAndContrast(image, BRIGHTENESS_SCALAR, CONTRAST_SCALAR);
 	    
 		IplImage hueChannel = cvCreateImage(size, depth, 1);
 		IplImage saturationChannel = cvCreateImage(size, depth, 1);
