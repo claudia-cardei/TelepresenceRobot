@@ -1,16 +1,14 @@
 package telepresence.follow;
 
-public class ObjectParameters {
+public class BlobParameters {
 	private final double area;
 	private final double xCenter;
 	private final double yCenter;
-	private int points;
 	
-	public ObjectParameters(double area, double xCenter, double yCenter, int points) {
+	public BlobParameters(double area, double xCenter, double yCenter) {
 		this.area = area;
 		this.xCenter = xCenter;
 		this.yCenter = yCenter;
-		this.points = points;
 	}
 	
 	public double getArea() {
@@ -28,6 +26,6 @@ public class ObjectParameters {
 	@Override
 	public String toString() {
 		return "ObjectParameters [area=" + area + ", xCenter=" + xCenter
-				+ ", yCenter=" + yCenter + ", points=" + points + "]";
+				+ ", yCenter=" + yCenter + "]";
 	}
 }

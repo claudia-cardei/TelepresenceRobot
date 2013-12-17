@@ -2,6 +2,7 @@
 import static com.googlecode.javacv.cpp.opencv_core.CV_AA;
 import static com.googlecode.javacv.cpp.opencv_core.CV_WHOLE_SEQ;
 import static com.googlecode.javacv.cpp.opencv_core.cvCreateImage;
+import static com.googlecode.javacv.cpp.opencv_core.cvDrawCircle;
 import static com.googlecode.javacv.cpp.opencv_core.cvDrawContours;
 import static com.googlecode.javacv.cpp.opencv_core.cvGet2D;
 import static com.googlecode.javacv.cpp.opencv_core.cvGetSeqElem;
@@ -30,7 +31,7 @@ import static com.googlecode.javacv.cpp.opencv_imgproc.cvCvtColor;
 import static com.googlecode.javacv.cpp.opencv_imgproc.cvFindContours;
 import static com.googlecode.javacv.cpp.opencv_imgproc.cvThreshold;
 import static com.googlecode.javacv.cpp.opencv_imgproc.medianBlur;
-import telepresence.follow.ObjectParameters;
+import telepresence.follow.BlobParameters;
 
 import com.googlecode.javacpp.Loader;
 import com.googlecode.javacv.cpp.opencv_core.CvContour;
@@ -46,7 +47,7 @@ public class HSV {
 	public static int x_co;
 	public static int y_co;
 	public static void main (String[] args) {
-		final IplImage src = cvLoadImage("tricou3_m.jpg");
+		final IplImage src = cvLoadImage("verde1.jpg");
 		CvSize size = src.cvSize();
 	    int depth = src.depth();
 	    IplImage brighteness = cvCreateImage(size, depth, 3);
@@ -58,8 +59,8 @@ public class HSV {
 //				System.out.println( "H:"+ s.val(0) + " S:" + s.val(1) + " V:" + s.val(2));
 //	    	}
 //	    }
-	    
-		cvScaleAdd(src, new CvScalar(2, 2, 2, 0), brighteness, src);
+//	    
+//		cvScaleAdd(src, new CvScalar(2.5, 2.5, 2.5, 0), brighteness, src);
 	    
 		
 		final IplImage hsvImage = cvCreateImage(size, depth, 3);
@@ -75,13 +76,13 @@ public class HSV {
 	    IplImage hue1 = cvCreateImage(size, depth, 1);
 	    IplImage hue2 = cvCreateImage(size, depth, 1);
 	    
-	    int HuethresL = 99, HuethresH = 130;
+	    int HuethresL = 60, HuethresH = 90;
 		cvThreshold(hChannel, hue1, HuethresL, 1, CV_THRESH_BINARY);
 		cvThreshold(hChannel, hue2, HuethresH, 1, CV_THRESH_BINARY_INV);
 		
 		IplImage sat1 = cvCreateImage(size, depth, 1);
 	    IplImage sat2 = cvCreateImage(size, depth, 1);
-		int SatLow = 100, SatHigh = 255;
+		int SatLow = 100, SatHigh = 230;
 		cvThreshold(sChannel, sat1, SatLow, 1, CV_THRESH_BINARY);
 		cvThreshold(sChannel, sat2, SatHigh, 1, CV_THRESH_BINARY_INV);
 		IplImage sat3 = cvCreateImage(size, depth, 1);
@@ -93,31 +94,13 @@ public class HSV {
 		IplImage hs = cvCreateImage(size, depth, 1);
 		cvMul(hue3, sat3, hs, 255);
 		
-		detectObjects(hs, hsvImage);
-		
-		
-		
-//		Params params = new Params();
-//	    params = params.minThreshold(HuethresL);
-//	    params = params.maxThreshold(HuethresH);
-//	    params = params.thresholdStep(1);
-//	    params = params.minDistBetweenBlobs(7);
-//	    //params = params.minArea(1000); 
-//	    //params = params.minConvexity(.4f);
-//	    //params = params.minInertiaRatio(.1f);
-//	    //params = params.maxArea(8000);
-//	    //params = params.maxConvexity(2);
-//	    params = params.filterByColor(false);
-//	    params = params.filterByCircularity(false);
-//	    params = params.filterByArea(false);
-//		
-//		SimpleBlobDetector detector = new SimpleBlobDetector(params);
-//		KeyPoint keypoint = new KeyPoint();
-//		detector.detect(hue3, keypoint, null);
-//		drawKeypoints(hsvImage, keypoint, hsvImage, CvScalar.WHITE, DrawMatchesFlags.DRAW_RICH_KEYPOINTS);
+		BlobParameters maxAreaObjectParameters = detectObjects(hs, src);
+		if (maxAreaObjectParameters != null) {
+			cvDrawCircle(src, new CvPoint((byte)0, maxAreaObjectParameters.getXCenter(), maxAreaObjectParameters.getYCenter()), 5, CvScalar.YELLOW, 1, CV_AA, 0);
+		}
 		
 		cvNamedWindow("Image", CV_WINDOW_AUTOSIZE);
-		cvNamedWindow("hs", CV_WINDOW_AUTOSIZE);
+		cvNamedWindow("hs", CV_WINDOW_AUTOSIZE);                                 
 		CvMouseCallback on_mouse = new CvMouseCallback() {
 			@Override
 			public void call(int event, int x, int y, int flags, com.googlecode.javacpp.Pointer param) {
@@ -127,7 +110,7 @@ public class HSV {
 				}
 				
 				CvScalar s = cvGet2D(hsvImage, y_co, x_co);
-				//System.out.println( "H:"+ s.val(0) + " S:" + s.val(1) + " V:" + s.val(2));
+				System.out.println("H: " + s.getVal(0) + " S:" + s.getVal(1) + " V:" + s.getVal(2));
 			}
 		};
 		
@@ -138,23 +121,23 @@ public class HSV {
 		cvWaitKey(0);
 	}
 	
-	public static ObjectParameters detectObjects(IplImage srcImage, IplImage origin) {
+	public static BlobParameters detectObjects(IplImage srcImage, IplImage origin) {
 	    CvMemStorage mem = CvMemStorage.create();
 	    CvSeq contours = new CvSeq();
 	    cvFindContours(srcImage, mem, contours, Loader.sizeof(CvContour.class) , CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
 	    
 	    double maxArea = 0;
-	    ObjectParameters maxAreaObjectParameters = null;
+	    BlobParameters maxAreaObjectParameters = null;
 	    for (CvSeq contour = contours; contour != null && !contour.isNull(); contour = contour.h_next()) {
             if (contour.elem_size() > 0) {
-                //CvSeq points = cvApproxPoly(contour, Loader.sizeof(CvContour.class), mem, CV_POLY_APPROX_DP, cvContourPerimeter(contours) * 0.02, 0);
-                double area = cvContourArea(contour, CV_WHOLE_SEQ, 1);
-                if (Math.abs(area) > 500) {
-                	cvDrawContours(origin, contour, CvScalar.BLUE, CvScalar.BLUE, -1, 1, CV_AA );
+                CvSeq points = cvApproxPoly(contour, Loader.sizeof(CvContour.class), mem, CV_POLY_APPROX_DP, cvContourPerimeter(contours) * 0.02, 0);
+                double area = cvContourArea(points, CV_WHOLE_SEQ, 1);
+                if (Math.abs(area) > 1000) {
+                	cvDrawContours(origin, points, CvScalar.BLUE, CvScalar.BLUE, -1, 1, CV_AA );
                 	if (Math.abs(area) > maxArea) {
                 		maxArea = Math.abs(area);
-                		Pair coordinates = getCenterCoordinates(contour);
-                		maxAreaObjectParameters = new ObjectParameters(maxArea, coordinates.x, coordinates.y, contour.total());
+                		Pair coordinates = getCenterCoordinates(points);
+                		maxAreaObjectParameters = new BlobParameters(maxArea, coordinates.x, coordinates.y);
                 	}
                 }
             }
@@ -166,16 +149,20 @@ public class HSV {
 	private static Pair getCenterCoordinates(CvSeq points) {
 		double xCenter = 0;
 		double yCenter = 0;
-		for (CvSeq point = points; point != null && !point.isNull(); point = point.h_next()) {
-			for (int i = 0; i < point.total(); i++) {
-			    CvPoint coordinate = new CvPoint(cvGetSeqElem(point, i));
+		int k = 0;
+		//for (CvSeq point = points; point != null && !point.isNull(); point = point.h_next()) {
+			
+			for (int i = 0; i < points.total(); i++) {
+			    CvPoint coordinate = new CvPoint(cvGetSeqElem(points, i));
 			    xCenter += coordinate.x();
 			    yCenter += coordinate.y();
-			    System.out.println(coordinate);
 			}
-		}
+			
+			System.out.println(points.total());
+		//}
 		xCenter /= points.total();
 		yCenter /= points.total();
+		System.out.println(xCenter + " " + yCenter);
 		
 		System.out.println("------------");
 		

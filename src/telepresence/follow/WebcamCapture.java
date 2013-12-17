@@ -1,5 +1,7 @@
 package telepresence.follow;
 
+import java.util.concurrent.TimeUnit;
+
 import com.googlecode.javacv.CanvasFrame;
 import com.googlecode.javacv.FrameGrabber.Exception;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
@@ -10,6 +12,9 @@ public class WebcamCapture {
 	private OpenCVFrameGrabber grabber;
 	private CanvasFrame canvasFrame;
 	private IplImage grabbedImage;
+	private BlobDetector blobDetector;
+	private PersonFollower personFollower;
+	
 	
 	public WebcamCapture() {
 		grabber = new OpenCVFrameGrabber(0);
@@ -20,6 +25,9 @@ public class WebcamCapture {
 		try {
 			grabber.start();
 			grabbedImage = grabber.grab();
+			
+			blobDetector = new BlobDetector(grabbedImage.cvSize(), grabbedImage.depth());
+			personFollower = new PersonFollower(null);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -29,16 +37,23 @@ public class WebcamCapture {
 		return canvasFrame.isVisible() && grabbedImage != null;
 	}
 	
-	public IplImage capture() {
-		IplImage returnImage = grabbedImage;
+	public void capture() {
 		try {
+			BlobParameters parameters = blobDetector.detectBlobColor(grabbedImage);
 			canvasFrame.showImage(grabbedImage);
+			
+			personFollower.getNewAction(parameters);
+			
+			TimeUnit.SECONDS.sleep(2);
+			
+			grabber.grab();
+			grabber.grab();
 			grabbedImage = grabber.grab();
 		} catch (Exception e) {
 			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
-		
-		return returnImage;
 	}
 	
 	public void stop() {
