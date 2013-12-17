@@ -23,12 +23,12 @@ public class State implements Constants {
 	StateActionEncoding encoder;
 	
 	
-	public State(Position firstObjective, Position secondObjective) {
+	public State(Position firstObjective, Position secondObjective, double angle) {
 		
 		actionTime = 0;
 		// Initialize the positions of the robot and the first and second objective
-		robot = new Position((SECOND_SQUARES_SIDE + FIRST_SQUARES_SIDE) * SQUARE_SIZE + SQUARE_SIZE / 2, (SECOND_SQUARES_UP + FIRST_SQUARES_UP) * SQUARE_SIZE + SQUARE_SIZE / 2, 0);
-		robotReal = new Position((SECOND_SQUARES_SIDE + FIRST_SQUARES_SIDE) * SQUARE_SIZE + SQUARE_SIZE / 2, (SECOND_SQUARES_UP + FIRST_SQUARES_UP) * SQUARE_SIZE + SQUARE_SIZE / 2, 0);
+		robot = new Position((SECOND_SQUARES_SIDE + FIRST_SQUARES_SIDE) * SQUARE_SIZE + SQUARE_SIZE / 2, (SECOND_SQUARES_UP + FIRST_SQUARES_UP) * SQUARE_SIZE + SQUARE_SIZE / 2, angle);
+		robotReal = new Position((SECOND_SQUARES_SIDE + FIRST_SQUARES_SIDE) * SQUARE_SIZE + SQUARE_SIZE / 2, (SECOND_SQUARES_UP + FIRST_SQUARES_UP) * SQUARE_SIZE + SQUARE_SIZE / 2, angle);
 		this.firstObjective = firstObjective;
 		this.secondObjective = secondObjective;
 		
@@ -149,8 +149,9 @@ public class State implements Constants {
 	/**
 	 * Change the current state according to an action
 	 * @param actionId the state-action encoding
+	 * @return the action
 	 */
-	public void changeState(Long actionId) {
+	public Action changeState(Long actionId) {
 		Action action = possibleActions.get(encoder.decode(actionId));
 		Position pos = action.getMovement(robot.angle);
 		
@@ -166,7 +167,7 @@ public class State implements Constants {
 		robot.angle += pos.angle;
 		if ( robot.angle < 0 )
 			robot.angle += 360;
-		if ( robot.angle > 360 )
+		if ( robot.angle >= 360 )
 			robot.angle -= 360;
 		
 		// Change the position of the objectives according to the robots movement
@@ -181,8 +182,9 @@ public class State implements Constants {
 		robotReal.y -= pos.y;
 		robotReal.angle = robot.angle;
 		
-		//System.out.println("\tAngle = " + robot.angle + ", x = " + robotReal.x + ", y = " + robotReal.y + ", Distance = " + robot.distance(firstObjective) + ", D2 =  " + robot.distance(secondObjective));
+		System.out.println("\tAngle = " + robot.angle + ", x = " + robotReal.x + ", y = " + robotReal.y + ", Distance = " + robot.distance(firstObjective) + ", D2 =  " + robot.distance(secondObjective));
 		
+		return action;
 	}
 	
 	
@@ -214,5 +216,17 @@ public class State implements Constants {
 			reward += (OBJECTVE_REWARD - robot.distance(secondObjective));
 		
 		return reward;
+	}
+	
+	
+	public void setRobotReal(Position robot) {
+		robotReal.x = robot.x;
+		robotReal.y = robot.y;
+		robotReal.angle = robot.angle;
+	}
+	
+	
+	public Position getRobotReal() {
+		return robotReal;
 	}
 }

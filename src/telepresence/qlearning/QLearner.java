@@ -94,13 +94,14 @@ public class QLearner implements Constants {
 	 * @param y1 OY coordinate for the first objective
 	 * @param x2 OX coordinate for the second objective
 	 * @param y2 OY coordinate for the second objective
+	 * @param angle the robot's initial angle
 	 * @return the generated state
 	 */
-	public State generateInitialState(int x1, int y1, int x2, int y2) {
+	public State generateInitialState(int x1, int y1, int x2, int y2, double angle) {
 		Position firstObjective = new Position(x1, y1);
 		Position secondObjective = new Position(x2, y2);
 		
-		State initialState = new State(firstObjective, secondObjective);
+		State initialState = new State(firstObjective, secondObjective, angle);
 		
 		return initialState;
 	}
@@ -219,18 +220,58 @@ public class QLearner implements Constants {
 	
 	
 	/**
+	 * Select the best learned action
+	 * @param stateActions the next possible state-actions 
+	 * @return the action and its score
+	 */
+	public Long selectLearnedAction(ArrayList<Long> statesActions) {
+		double maxScore, score;
+		long chosenStateAction = 0;
+		Random r = new Random();
+		ArrayList<Long> unusedAction = new ArrayList<Long>();
+		
+		maxScore = MIN_SCORE;
+			
+		for (Long stateAction:statesActions) { 
+			if ( Q.containsKey(stateAction) ) {
+				score = Q.get(stateAction);
+			}
+			else {
+				// If it has not yet been explored, its score is 0
+				unusedAction.add(stateAction);
+				score = 0;
+			}
+			
+			if ( score > maxScore ) {
+				maxScore = score;
+				chosenStateAction = stateAction;
+			}
+		}
+			
+		// If the maximum score is 0, which is the score for unexplored states, randomly pick an unexplored
+		// state.
+		//if ( maxScore == 0 && unusedAction.size() > 0 ) {
+			//chosenStateAction = unusedAction.get(r.nextInt(unusedAction.size()));
+		//}
+				
+		return chosenStateAction;
+	}
+	
+	
+	/**
 	 * Learn a path using the Q-learning algorithm
 	 * @param x1 OX coordinate for the first objective
 	 * @param y1 OY coordinate for the first objective
 	 * @param x2 OX coordinate for the second objective
 	 * @param y2 OY coordinate for the second objective
+	 * @param angle the robot's initial angle
 	 * @return the number of states used for the path
 	 */
-	public int learn(int x1, int y1, int x2, int y2) {
+	public int learn(int x1, int y1, int x2, int y2, double angle) {
 		Long chosenStateAction;
 		SelectionResult result;
 		int steps = 0;
-		State state = generateInitialState(x1, y1, x2, y2);
+		State state = generateInitialState(x1, y1, x2, y2, angle);
 		double oldScore, newScore, maxScore;
 		ArrayList<Long> actions;
 		
@@ -331,7 +372,8 @@ public class QLearner implements Constants {
 									learner.learn(x1 * SQUARE_SIZE + SQUARE_SIZE / 2, 
 											y1 * SQUARE_SIZE + SQUARE_SIZE / 2, 
 											x2 * SQUARE_SIZE + SQUARE_SIZE / 2, 
-											y2 * SQUARE_SIZE + SQUARE_SIZE / 2);
+											y2 * SQUARE_SIZE + SQUARE_SIZE / 2,
+											0);
 								}
 								
 								System.out.println("Combination:  First("+x1+","+y1+") Second("+x2+","+y2+")");

@@ -31,16 +31,24 @@ public class Position implements Constants {
 		return x;
 	}
 
-	public void addX(int x) {
+	public void addX(double x) {
 		this.x += x;
+	}
+
+	public void setX(double x) {
+		this.x = x;
 	}
 
 	public double getY() {
 		return y;
 	}
 
-	public void addY(int y) {
+	public void addY(double y) {
 		this.y += y;
+	}
+
+	public void setY(double y) {
+		this.y = y;
 	}
 
 	public double getAngle() {
@@ -49,6 +57,14 @@ public class Position implements Constants {
 
 	public void addAngle(double angle) {
 		this.angle += angle;
+		if ( this.angle >= 360 )
+			this.angle -= 360;
+		if ( this.angle < 0 )
+			this.angle += 360;
+	}
+
+	public void setAngle(double angle) {
+		this.angle = angle;
 	}
 	
 	
