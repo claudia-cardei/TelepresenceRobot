@@ -1,4 +1,4 @@
-package QLearning;
+package telepresence.qlearning;
 
 /**
  * Values related to an action.

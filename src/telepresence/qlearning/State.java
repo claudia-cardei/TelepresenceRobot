@@ -1,4 +1,4 @@
-package QLearning;
+package telepresence.qlearning;
 import java.util.ArrayList;
 
 /**

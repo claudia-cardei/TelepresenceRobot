@@ -1,10 +1,11 @@
-package QLearning;
+package telepresence.qlearning;
 
 public interface Constants {
 
 	// Robot
 	public static final double MAX_SPEED = 40;
 	public static final double DIAMETER = 45.72;	
+	public static final int SQUARES_RADIUS = 0;
 	
 	// Q-learning
 	public static final double ALPHA = 0.4;
@@ -37,4 +38,10 @@ public interface Constants {
 	public static int SECOND_SQUARES_UP = 5;
 	public static int SECOND_SQUARES_DOWN = 0;
 	public static int SECOND_SQUARES_SIDE = 5;
+	
+	// Window
+	public static int RIGHT = 0;
+	public static int DOWN = 1;
+	public static int LEFT = 2;
+	public static int UP = 3;
 }
