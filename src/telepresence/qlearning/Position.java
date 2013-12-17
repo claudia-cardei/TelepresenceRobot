@@ -1,4 +1,4 @@
-package QLearning;
+package telepresence.qlearning;
 
 /**
  * Values related to the position of an objective or the robot
@@ -61,4 +61,18 @@ public class Position implements Constants {
 		return Math.sqrt(Math.pow(p.x - x, 2) + Math.pow(p.y - y, 2));
 	}
 	
+	
+	public boolean equalsCoord(Position p) {
+		if ( p.x == this.x && p.y == this.y )
+			return true;
+		return false;
+	}
+	
+	
+	public boolean equals(Object obj) {
+		Position p = (Position) obj;
+		if ( p.x == this.x && p.y == this.y )
+			return true;
+		return false;
+	}
 }

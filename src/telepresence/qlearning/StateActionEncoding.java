@@ -1,4 +1,4 @@
-package QLearning;
+package telepresence.qlearning;
 
 /**
  * The encoding for a state-action pair
