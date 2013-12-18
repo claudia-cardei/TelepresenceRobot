@@ -27,8 +27,8 @@ public class State implements Constants {
 		
 		actionTime = 0;
 		// Initialize the positions of the robot and the first and second objective
-		robot = new Position((SECOND_SQUARES_SIDE + FIRST_SQUARES_SIDE) * SQUARE_SIZE + SQUARE_SIZE / 2, (SECOND_SQUARES_UP + FIRST_SQUARES_UP) * SQUARE_SIZE + SQUARE_SIZE / 2, angle);
-		robotReal = new Position((SECOND_SQUARES_SIDE + FIRST_SQUARES_SIDE) * SQUARE_SIZE + SQUARE_SIZE / 2, (SECOND_SQUARES_UP + FIRST_SQUARES_UP) * SQUARE_SIZE + SQUARE_SIZE / 2, angle);
+		robot = new Position(ROBOT_X, ROBOT_Y, angle);
+		robotReal = new Position(ROBOT_X, ROBOT_Y, angle);
 		this.firstObjective = firstObjective;
 		this.secondObjective = secondObjective;
 		
@@ -132,7 +132,7 @@ public class State implements Constants {
 		// For all possible actions
 		for (i = 0; i < possibleActions.size(); i++) {
 			action = possibleActions.get(i);
-
+			
 			// If the actions is valid
 			if ( checkAction(action) ) {
 				// Get the state-action encoding
@@ -182,7 +182,7 @@ public class State implements Constants {
 		robotReal.y -= pos.y;
 		robotReal.angle = robot.angle;
 		
-		System.out.println("\tAngle = " + robot.angle + ", x = " + robotReal.x + ", y = " + robotReal.y + ", Distance = " + robot.distance(firstObjective) + ", D2 =  " + robot.distance(secondObjective));
+		//System.out.println("\tAngle = " + robot.angle + ", x = " + robotReal.x + ", y = " + robotReal.y + ", Distance = " + robot.distance(firstObjective) + ", D2 =  " + robot.distance(secondObjective));
 		
 		return action;
 	}
@@ -222,7 +222,6 @@ public class State implements Constants {
 	public void setRobotReal(Position robot) {
 		robotReal.x = robot.x;
 		robotReal.y = robot.y;
-		robotReal.angle = robot.angle;
 	}
 	
 	

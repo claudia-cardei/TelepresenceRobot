@@ -231,7 +231,7 @@ public class QLearner implements Constants {
 		ArrayList<Long> unusedAction = new ArrayList<Long>();
 		
 		maxScore = MIN_SCORE;
-			
+		
 		for (Long stateAction:statesActions) { 
 			if ( Q.containsKey(stateAction) ) {
 				score = Q.get(stateAction);
@@ -245,15 +245,16 @@ public class QLearner implements Constants {
 			if ( score > maxScore ) {
 				maxScore = score;
 				chosenStateAction = stateAction;
+			
 			}
 		}
 			
 		// If the maximum score is 0, which is the score for unexplored states, randomly pick an unexplored
 		// state.
-		//if ( maxScore == 0 && unusedAction.size() > 0 ) {
-			//chosenStateAction = unusedAction.get(r.nextInt(unusedAction.size()));
-		//}
-				
+		if ( maxScore == 0 && unusedAction.size() > 0 ) {
+			chosenStateAction = unusedAction.get(r.nextInt(unusedAction.size()));
+		}
+		
 		return chosenStateAction;
 	}
 	
@@ -314,7 +315,7 @@ public class QLearner implements Constants {
 	public static void main(String[] args) {
 		QLearner learner = new QLearner("q.txt");
 		int i, y1, y2, x1, x2, k, rx1, rx2, ry1, ry2;
-		double distance;
+		double distance, a, ra, angle;
 		
 		/*i1 = (SECOND_SQUARES_SIDE + FIRST_SQUARES_SIDE) * SQUARE_SIZE + SQUARE_SIZE / 2; 
 		j1 = (SECOND_SQUARES_UP) * SQUARE_SIZE + SQUARE_SIZE / 2;
@@ -334,10 +335,11 @@ public class QLearner implements Constants {
 		System.out.println("Average steps: " + (double)totalSteps / 100);*/
 
 		// Restarting point
-		rx1 = 15;
-		ry1 = 6;
-		rx2 = 20;
-		ry2 = 9;
+		rx1 = 0;
+		ry1 = 0;
+		rx2 = 0;
+		ry2 = 0;
+		ra = 0;
 				
 		i = 0;
 		// For every possible position for the first objective
@@ -360,29 +362,40 @@ public class QLearner implements Constants {
 								// Don't allow the second objective to be lower than the first
 								&& y2 <= y1 ) {
 							
-							// Restart from a certain point
-							if ( y1 > ry1 
-									|| (y1 == ry1 && x1 > rx1)
-									|| (y1 == ry1 && x1 == rx1 && y2 > ry2) 
-									|| (y1 == ry1 && x1 == rx1 && y2 == ry2 && x2 > rx2) ) {
+							// For each possible angle
+							for (a = -90; a <= 90; a = a + 10) {
+								if ( a < 0 )
+									angle = a + 360;
+								else
+									angle = a;								
 								
-								// For each combination of objectives run the algorithm NR_RUNS times
-								for (k = 0; k < NR_RUNS; k++) {
+								// Restart from a certain point
+								if ( y1 > ry1 
+										|| (y1 == ry1 && x1 > rx1)
+										|| (y1 == ry1 && x1 == rx1 && y2 > ry2) 
+										|| (y1 == ry1 && x1 == rx1 && y2 == ry2 && x2 > rx2)
+										|| (y1 == ry1 && x1 == rx1 && y2 == ry2 && x2 == rx2 && a > ra)) {
 
-									learner.learn(x1 * SQUARE_SIZE + SQUARE_SIZE / 2, 
-											y1 * SQUARE_SIZE + SQUARE_SIZE / 2, 
-											x2 * SQUARE_SIZE + SQUARE_SIZE / 2, 
-											y2 * SQUARE_SIZE + SQUARE_SIZE / 2,
-											0);
-								}
-								
-								System.out.println("Combination:  First("+x1+","+y1+") Second("+x2+","+y2+")");
-								i++;
-								
-								// Write the new Q to a file
-								if ( i % 10 == 0 ) {
-									learner.writeQ();
-									System.out.println("Write file.");
+									//System.out.println("Combination:  First("+x1+","+y1+") Second("+x2+","+y2+") Angle " + a);
+									
+									// For each combination of objectives run the algorithm NR_RUNS times
+									for (k = 0; k < NR_RUNS; k++) {
+	
+										learner.learn(x1 * SQUARE_SIZE + SQUARE_SIZE / 2, 
+												y1 * SQUARE_SIZE + SQUARE_SIZE / 2, 
+												x2 * SQUARE_SIZE + SQUARE_SIZE / 2, 
+												y2 * SQUARE_SIZE + SQUARE_SIZE / 2,
+												angle);
+									}
+									
+									System.out.println("Combination:  First("+x1+","+y1+") Second("+x2+","+y2+") Angle " + a);
+									i++;
+									
+									// Write the new Q to a file
+									if ( i % 10 == 0 ) {
+										learner.writeQ();
+										System.out.println("Write file.");
+									}
 								}
 							}
 						}

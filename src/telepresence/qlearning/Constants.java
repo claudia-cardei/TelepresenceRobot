@@ -13,7 +13,7 @@ public interface Constants {
 	public static final int MIN_SCORE = -Integer.MIN_VALUE;
 	public static final int OBJECTVE_REWARD = 100;
 	public static final double RANDOM_ACTION_PERCENT = 35;
-	public static final double NR_RUNS = 200;
+	public static final double NR_RUNS = 300;
 	
 	// Action types
 	public static final int ROTATE = 0;
@@ -38,6 +38,8 @@ public interface Constants {
 	public static int SECOND_SQUARES_UP = 5;
 	public static int SECOND_SQUARES_DOWN = 0;
 	public static int SECOND_SQUARES_SIDE = 5;
+	public static double ROBOT_X = (SECOND_SQUARES_SIDE + FIRST_SQUARES_SIDE) * SQUARE_SIZE + SQUARE_SIZE / 2;
+	public static double ROBOT_Y = (SECOND_SQUARES_UP + FIRST_SQUARES_UP) * SQUARE_SIZE + SQUARE_SIZE / 2;
 	
 	// Window
 	public static int RIGHT = 0;
