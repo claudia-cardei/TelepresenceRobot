@@ -1,11 +1,9 @@
 package telepresence.follow;
 
-import java.util.concurrent.TimeUnit;
-
 import com.googlecode.javacv.CanvasFrame;
 import com.googlecode.javacv.FrameGrabber.Exception;
-import com.googlecode.javacv.cpp.opencv_core.IplImage;
 import com.googlecode.javacv.OpenCVFrameGrabber;
+import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
 public class WebcamCapture {
 	
@@ -44,16 +42,14 @@ public class WebcamCapture {
 			
 			personFollower.getNewAction(parameters);
 			
-			TimeUnit.SECONDS.sleep(2);
-			
-			grabber.grab();
 			grabber.grab();
 			grabbedImage = grabber.grab();
 		} catch (Exception e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		} 
 	}
 	
 	public void stop() {

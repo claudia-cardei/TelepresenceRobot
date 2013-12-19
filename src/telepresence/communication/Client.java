@@ -1,14 +1,10 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package telepresence.communication;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,7 +16,7 @@ public class Client {
 
     private String ip;
     private int port;
-    private PrintWriter out = null;
+    private DataOutputStream out = null;
     private Socket socket = null;
     
     private static Client instance = null;
@@ -39,7 +35,7 @@ public class Client {
     public boolean connect() {
         try {
             socket = new Socket(ip, port);
-            out = new PrintWriter(socket.getOutputStream(), true);
+            out = new DataOutputStream(socket.getOutputStream());
         } catch (IOException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
             return false;
@@ -52,8 +48,14 @@ public class Client {
             System.out.println("Establish connection first!");
             return false;
         }
-        out.print(cmd);
-        System.out.println("Command " + cmd + " was sent to the server");
+        try {
+			out.writeByte(cmd);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
+        System.out.println("Command " + ((char)cmd) + " was sent to the server");
         return true;
     }
     
