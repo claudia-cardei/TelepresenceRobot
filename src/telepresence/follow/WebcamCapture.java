@@ -5,7 +5,16 @@ import com.googlecode.javacv.FrameGrabber.Exception;
 import com.googlecode.javacv.OpenCVFrameGrabber;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
+/**
+ * Grabs frames from webcam, detects the biggest green blob and generates an action for the robot.
+ * 
+ * @author Claudia
+ *
+ */
 public class WebcamCapture {
+	
+	private static final int WIDTH = 640;
+	private static final int HEIGHT = 320;
 	
 	private OpenCVFrameGrabber grabber;
 	private CanvasFrame canvasFrame;
@@ -16,8 +25,8 @@ public class WebcamCapture {
 	
 	public WebcamCapture() {
 		grabber = new OpenCVFrameGrabber(0);
-		grabber.setImageWidth(640);
-		grabber.setImageHeight(320);
+		grabber.setImageWidth(WIDTH);
+		grabber.setImageHeight(HEIGHT);
 		canvasFrame = new CanvasFrame("webCam");
 		
 		try {
@@ -25,7 +34,7 @@ public class WebcamCapture {
 			grabbedImage = grabber.grab();
 			
 			blobDetector = new BlobDetector(grabbedImage.cvSize(), grabbedImage.depth());
-			personFollower = new PersonFollower(null);
+			personFollower = new PersonFollower(WIDTH, HEIGHT);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -40,14 +49,13 @@ public class WebcamCapture {
 			BlobParameters parameters = blobDetector.detectBlobColor(grabbedImage);
 			canvasFrame.showImage(grabbedImage);
 			
-			personFollower.getNewAction(parameters);
+			personFollower.generateNewAction(parameters);
 			
 			grabber.grab();
 			grabbedImage = grabber.grab();
 		} catch (Exception e) {
 			e.printStackTrace();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
 	}
@@ -60,5 +68,4 @@ public class WebcamCapture {
 			e.printStackTrace();
 		}
 	}
-
 }

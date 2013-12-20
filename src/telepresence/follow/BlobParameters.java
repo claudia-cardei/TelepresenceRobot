@@ -1,5 +1,11 @@
 package telepresence.follow;
 
+/**
+ * Aggregates all the necessary information for a blob.
+ * 
+ * @author Claudia
+ *
+ */
 public class BlobParameters {
 	private final double area;
 	private final double xCenter;

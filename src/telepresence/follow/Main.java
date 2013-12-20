@@ -1,6 +1,12 @@
 package telepresence.follow;
 
 
+/**
+ * Main class for person following behaviour.
+ * 
+ * @author Claudia
+ *
+ */
 public class Main {
 	
 	public static void main(String[] args) {
