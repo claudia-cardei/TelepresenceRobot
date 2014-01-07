@@ -32,7 +32,11 @@ public class FloorMap {
             }
             
         }
-           
     }
+    
+    public IplImage getImage() {
+        return floorImage;
+    }
+            
     
 }

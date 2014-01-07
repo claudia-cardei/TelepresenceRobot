@@ -1,4 +1,3 @@
-
 package telepresence.communication;
 
 import java.io.DataOutputStream;
@@ -22,7 +21,7 @@ public class Client {
     private static Client instance = null;
     private static final String DEFAULT_IP = "192.168.137.5";
     private static final int DEFAULT_PORT = 8080;
-    
+
     private Client() {
         this(DEFAULT_IP, DEFAULT_PORT);
     }
@@ -42,23 +41,23 @@ public class Client {
         }
         return true;
     }
-    
+
     public boolean sendCommand(byte cmd) {
         if (out == null) {
             System.out.println("Establish connection first!");
             return false;
         }
         try {
-			out.writeByte(cmd);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return false;
-		}
-        System.out.println("Command " + ((char)cmd) + " was sent to the server");
+            out.writeByte(cmd);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return false;
+        }
+        System.out.println("Command " + ((char) cmd) + " was sent to the server");
         return true;
     }
-    
+
     public boolean close() {
         try {
             socket.close();
@@ -68,17 +67,18 @@ public class Client {
         }
         return true;
     }
-    
+
     public static Client getInstance() {
         return getInstance(DEFAULT_IP, DEFAULT_PORT);
     }
-    
+
     public static Client getInstance(String ip, int port) {
         if (instance == null) {
             instance = new Client(ip, port);
-            if (!instance.connect()) instance = null;
+            if (!instance.connect()) {
+                instance = null;
+            }
         }
         return instance;
     }
 }
-
