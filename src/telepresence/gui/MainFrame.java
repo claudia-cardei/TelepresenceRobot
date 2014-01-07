@@ -13,12 +13,15 @@ import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import static java.lang.Thread.sleep;
 import java.util.LinkedList;
 import java.util.List;
+import javax.imageio.ImageIO;
 import javax.swing.GroupLayout;
 import javax.swing.JLabel;
+import javax.swing.border.Border;
 import sun.awt.HorizBagLayout;
 import telepresence.communication.Client;
 import telepresence.communication.Commands;
@@ -58,12 +61,14 @@ public class MainFrame extends javax.swing.JFrame {
             image.setSize(mainPanel.getSize());
             mainPanel.add(image);
             
-            IplImage robotImage = cvLoadImage("wall-e.jpg");
-            if (robotImage == null) throw new IOException("Image not found");
-            robot = new ImagePanel(robotImage.getBufferedImage());
+            BufferedImage robotImage;
+            robotImage = ImageIO.read(new File("wall-e.png"));
+            robot = new ImagePanel(robotImage);
             robot.setLayout(null);
-            robot.setSize(robotImage.width(), robotImage.height());
+            robot.setSize(robotImage.getWidth(), robotImage.getHeight());
             robot.setLocation(100, 100);
+            robot.setOpaque(false);
+            robot.setBackground(new Color(0, 0, 0, 0));
             mainPanel.add(robot, 0);
             
             
