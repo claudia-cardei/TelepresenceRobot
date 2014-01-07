@@ -34,6 +34,12 @@ import com.googlecode.javacv.cpp.opencv_core.CvSeq;
 import com.googlecode.javacv.cpp.opencv_core.CvSize;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
+/**
+ * Applies filters, finds contours and detects the biggest green blob.
+ * 
+ * @author Claudia
+ *
+ */
 public class BlobDetector {
 	
 	private static final int BRIGHTENESS_SCALAR = 0;
