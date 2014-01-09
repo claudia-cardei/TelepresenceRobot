@@ -2,8 +2,11 @@ package telepresence.follow;
 
 import java.util.concurrent.TimeUnit;
 
+import com.googlecode.javacv.cpp.opencv_core.IplImage;
+
 import telepresence.communication.Client;
 import telepresence.communication.Commands;
+import telepresence.gui.ImagePanel;
 
 /**
  * 
@@ -12,7 +15,7 @@ import telepresence.communication.Commands;
  * @author Claudia
  *
  */
-public class PersonFollower {
+public class PersonFollower extends Thread {
 	
 	private enum State {
 		FWD(1), BWD(-1), WAIT(0);
@@ -48,18 +51,34 @@ public class PersonFollower {
     private Client client = Client.getInstance("localhost", 8080);
     
     private BlobParameters oldParameters;
-    private final int width;
-    private final int height;
+    private final ImagePanel imagePanel;
     private State state;
+    private BlobDetector blobDetector;
 
-    public PersonFollower(int width, int height) {
-        this.width = width;
-        this.height = height;
+    public PersonFollower(ImagePanel imagePanel) {
+        this.imagePanel = imagePanel;
         this.oldParameters = null;
         this.state = State.WAIT;
+        
+        IplImage image = imagePanel.getIplImageFromBufferedImage();
+        this.blobDetector = new BlobDetector(image.cvSize(), image.depth());
+    }
+    
+    @Override
+    public void run() {
+    	while (true) {
+    		try {
+				generateNewAction();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+    	}
     }
 
-    public void generateNewAction(BlobParameters parameters) throws InterruptedException {
+    public void generateNewAction() throws InterruptedException {
+    	IplImage image = imagePanel.getIplImageFromBufferedImage();
+    	BlobParameters parameters = blobDetector.detectBlobColor(image);
+    	
         if (parameters == null || oldParameters == null) {
             if (oldParameters != null) {
                 //TODO: emit sound for 1 second
@@ -67,7 +86,7 @@ public class PersonFollower {
             }
         } else {
         	// Check conditions for rotation.
-        	if (Math.abs(parameters.getXCenter() - width/2) > MIN_DIFFERENCE_X) {
+        	if (Math.abs(parameters.getXCenter() - image.width()/2) > MIN_DIFFERENCE_X) {
                 System.out.print("ROTATE ");
                 
                 int angle;
@@ -76,7 +95,7 @@ public class PersonFollower {
             	else 
             		angle = FAR_NUM_ANGLE;
                 
-                if (parameters.getXCenter() > width/2) {
+                if (parameters.getXCenter() > image.width()/2) {
                     System.out.println("RIGHT");
                 	for (int i = 0; i < angle; i++)
                 		client.sendCommand(Commands.RIGHT9);
@@ -127,12 +146,4 @@ public class PersonFollower {
         
         oldParameters = parameters;
     }
-    
-    public int getWidth() {
-		return width;
-	}
-
-	public int getHeight() {
-		return height;
-	}
 }

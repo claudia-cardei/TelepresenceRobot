@@ -1,5 +1,6 @@
 package telepresence.gui;
 
+import com.googlecode.javacv.cpp.opencv_core.IplImage;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
@@ -10,10 +11,20 @@ import javax.swing.JPanel;
 
 public class ImagePanel extends JPanel {
 
-    private BufferedImage image;
+	private static final long serialVersionUID = -3108988905436849084L;
+	
+	private BufferedImage image;
 
     public ImagePanel(BufferedImage image) {
         this.image = image;
+    }
+    
+    public void setBufferedImageFromIplImage(IplImage iplImage) {
+    	image = iplImage.getBufferedImage();
+    }
+    
+    public IplImage getIplImageFromBufferedImage() {
+    	return IplImage.createFrom(image);
     }
 
     @Override

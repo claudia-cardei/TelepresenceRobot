@@ -1,8 +1,9 @@
 package telepresence.follow;
 
-import com.googlecode.javacv.CanvasFrame;
+import telepresence.gui.ImagePanel;
+
+import com.googlecode.javacv.FFmpegFrameGrabber;
 import com.googlecode.javacv.FrameGrabber.Exception;
-import com.googlecode.javacv.OpenCVFrameGrabber;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 
 /**
@@ -11,59 +12,55 @@ import com.googlecode.javacv.cpp.opencv_core.IplImage;
  * @author Claudia
  *
  */
-public class WebcamCapture {
+public class WebcamCapture extends Thread {
 	
 	private static final int WIDTH = 640;
 	private static final int HEIGHT = 320;
 	
-	private OpenCVFrameGrabber grabber;
-	private CanvasFrame canvasFrame;
+	private FFmpegFrameGrabber grabber;
 	private IplImage grabbedImage;
-	private BlobDetector blobDetector;
-	private PersonFollower personFollower;
+	private final ImagePanel imagePanel;
 	
-	
-	public WebcamCapture() {
-		grabber = new OpenCVFrameGrabber(0);
+	public WebcamCapture(ImagePanel imagePanel) {
+		grabber = new FFmpegFrameGrabber("http://localhost:8081");
+		grabber.setFormat("mjpeg");
 		grabber.setImageWidth(WIDTH);
 		grabber.setImageHeight(HEIGHT);
-		canvasFrame = new CanvasFrame("webCam");
 		
 		try {
 			grabber.start();
 			grabbedImage = grabber.grab();
-			
-			blobDetector = new BlobDetector(grabbedImage.cvSize(), grabbedImage.depth());
-			personFollower = new PersonFollower(WIDTH, HEIGHT);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		this.imagePanel = imagePanel;
+	}
+	
+	@Override
+    public void run() {
+    	while (isCapturing()) {
+			capture();
+			imagePanel.setBufferedImageFromIplImage(grabbedImage);
+    	}
+    }
+	
+	public boolean isCapturing() {
+		return grabbedImage != null;
+	}
+	
+	public void capture() {
+		try {
+			grabber.grab();
+			grabbedImage = grabber.grab();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public boolean isCapturing() {
-		return canvasFrame.isVisible() && grabbedImage != null;
-	}
-	
-	public void capture() {
-		try {
-			BlobParameters parameters = blobDetector.detectBlobColor(grabbedImage);
-			canvasFrame.showImage(grabbedImage);
-			
-			personFollower.generateNewAction(parameters);
-			
-			grabber.grab();
-			grabbedImage = grabber.grab();
-		} catch (Exception e) {
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} 
-	}
-	
-	public void stop() {
+	public void stopCapturing() {
 		try {
 			grabber.stop();
-			canvasFrame.dispose();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

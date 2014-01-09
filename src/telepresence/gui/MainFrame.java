@@ -4,9 +4,6 @@
  */
 package telepresence.gui;
 
-import com.googlecode.javacv.cpp.opencv_core.*;
-import static com.googlecode.javacv.cpp.opencv_imgproc.*;
-import static com.googlecode.javacv.cpp.opencv_highgui.*;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.KeyEventDispatcher;
@@ -15,14 +12,11 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import static java.lang.Thread.sleep;
 import java.util.LinkedList;
 import java.util.List;
+
 import javax.imageio.ImageIO;
-import javax.swing.GroupLayout;
-import javax.swing.JLabel;
-import javax.swing.border.Border;
-import sun.awt.HorizBagLayout;
+
 import telepresence.communication.Client;
 import telepresence.communication.Commands;
 import telepresence.map.FloorMap;
