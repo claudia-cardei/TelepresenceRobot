@@ -1,5 +1,6 @@
 package telepresence.follow;
 
+import com.googlecode.javacv.CanvasFrame;
 import java.util.concurrent.TimeUnit;
 
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
@@ -37,18 +38,20 @@ public class PersonFollower extends Thread {
     private static final double BWD_THRESH = 60000;
     private static final double KEEP_STATE_THRESH = 40000;
     private static final double FWD_THRESH = 25000;
-    private static final double MIN_DIFFERENCE_X = 100;
-    private static final int NEAR_NUM_ANGLE = 2;
-    private static final int FAR_NUM_ANGLE = 3;
+    private static final double MIN_DIFFERENCE_X = 70;
+    private static final int NEAR_NUM_ANGLE = 1;
+    private static final int FAR_NUM_ANGLE = 1;
     private static final long ROTATE_TIME_DELAY = 400;
     private static final long FWD_BWD_TIME_DELAY = 1000;
     private static final long WAIT_TIME_DELAY = 500;
+    private static final long BEEP_TIME_DELAY = 3000;
     private Client client = Client.getInstance();
     private BlobParameters oldParameters;
     private final ImagePanel imagePanel;
     private State state;
     private BlobDetector blobDetector;
     private boolean running = true;
+    private CanvasFrame canvas = new CanvasFrame("DebugBlobDetector");
 
     public PersonFollower(ImagePanel imagePanel) {
         this.imagePanel = imagePanel;
@@ -69,7 +72,7 @@ public class PersonFollower extends Thread {
             }
         }
     }
-    
+
     public void close() {
         running = false;
     }
@@ -77,15 +80,16 @@ public class PersonFollower extends Thread {
     public void generateNewAction() throws InterruptedException {
         IplImage image = imagePanel.getIplImageFromBufferedImage();
         BlobParameters parameters = blobDetector.detectBlobColor(image);
+        canvas.showImage(image);
+        System.out.println(image.height() + " " + image.width() + " " + parameters);
 
-        if (parameters == null || oldParameters == null) {
+        if (parameters == null) {
             if (oldParameters != null) {
-                System.out.println("bip bip");
+                System.out.println("BEEP");
                 client.sendCommand(Commands.BEEP);
                 client.sendCommand(Commands.BEEP);
                 client.sendCommand(Commands.BEEP);
-                TimeUnit.MILLISECONDS.sleep(3000);
-                        
+                TimeUnit.MILLISECONDS.sleep(BEEP_TIME_DELAY);
             }
         } else {
             // Check conditions for rotation.
@@ -118,13 +122,21 @@ public class PersonFollower extends Thread {
                     if (parameters.getArea() > BWD_THRESH) {
                         state = State.BWD;
                     } else {
-                        state = State.min(state, State.WAIT);
+                        state = State.WAIT;
                     }
                 } else {
                     if (parameters.getArea() < FWD_THRESH) {
-                        state = State.FWD;
+                        if (state == State.BWD) {
+                            state = State.WAIT;
+                        } else {
+                            state = State.FWD;
+                        }
                     } else {
-                        state = State.max(state, State.WAIT);
+                        if (state == State.FWD) {
+                            state = State.FWD;
+                        } else {
+                            state = State.WAIT;
+                        }
                     }
                 }
 
@@ -150,5 +162,6 @@ public class PersonFollower extends Thread {
         }
 
         oldParameters = parameters;
+        image.release();
     }
 }

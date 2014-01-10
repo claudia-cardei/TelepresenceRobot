@@ -24,8 +24,9 @@ public class WebcamCapture extends Thread {
     private IplImage grabbedImage;
     private final ImagePanel imagePanel;
     private Client client = Client.getInstance();
-    
+
     public WebcamCapture(ImagePanel imagePanel, boolean local) {
+        this.imagePanel = imagePanel;
         if (local) {
             grabber = new OpenCVFrameGrabber(0);
         } else {
@@ -35,6 +36,14 @@ public class WebcamCapture extends Thread {
         //grabber.setImageWidth(WIDTH);
         //grabber.setImageHeight(HEIGHT);
 
+    }
+
+    public ImagePanel getPanel() {
+        return imagePanel;
+    }
+
+    @Override
+    public void run() {
         try {
             grabber.start();
             grabbedImage = grabber.grab();
@@ -42,15 +51,6 @@ public class WebcamCapture extends Thread {
             e.printStackTrace();
         }
 
-        this.imagePanel = imagePanel;
-    }
-    
-    public ImagePanel getPanel() {
-        return imagePanel;
-    }
-
-    @Override
-    public void run() {
         while (isCapturing()) {
             capture();
             imagePanel.setBufferedImageFromIplImage(grabbedImage);
