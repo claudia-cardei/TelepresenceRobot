@@ -97,13 +97,15 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     public MainFrame() {
-        init();
         client = Client.getInstance();
+        init();
+        
     }
 
     public MainFrame(String ip, int port) {
-        init();
         client = Client.getInstance(ip, port);
+        init();
+        
     }
 
     private class MyDispatcher implements KeyEventDispatcher {
@@ -546,7 +548,7 @@ public class MainFrame extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new MainFrame("localhost", 8080).setVisible(true);
+                new MainFrame("192.168.137.25", 8080).setVisible(true);
             }
         });
     }

@@ -7,6 +7,7 @@ import com.googlecode.javacv.FrameGrabber;
 import com.googlecode.javacv.FrameGrabber.Exception;
 import com.googlecode.javacv.OpenCVFrameGrabber;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
+import telepresence.communication.Client;
 
 /**
  * Grabs frames from webcam, detects the biggest green blob and generates an
@@ -22,12 +23,13 @@ public class WebcamCapture extends Thread {
     private FrameGrabber grabber;
     private IplImage grabbedImage;
     private final ImagePanel imagePanel;
-
+    private Client client = Client.getInstance();
+    
     public WebcamCapture(ImagePanel imagePanel, boolean local) {
         if (local) {
             grabber = new OpenCVFrameGrabber(0);
         } else {
-            grabber = new FFmpegFrameGrabber("http://192.168.1.84:8081");
+            grabber = new FFmpegFrameGrabber("http://" + client.getIP() + ":8081");
             grabber.setFormat("mjpeg");
         }
         //grabber.setImageWidth(WIDTH);

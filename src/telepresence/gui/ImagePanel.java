@@ -36,6 +36,7 @@ public class ImagePanel extends JPanel {
 
     @Override
     protected void paintComponent(Graphics g) {
+        setSize(getParent().getSize());
         super.paintComponent(g);
         if (image == null) return;
         int panelWidth = getParent().getWidth();

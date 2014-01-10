@@ -18,7 +18,7 @@ public class Client {
     private Socket socket = null;
     
     private static Client instance = null;
-    private static final String DEFAULT_IP = "192.168.137.5";
+    private static final String DEFAULT_IP = "192.168.137.25";
     private static final int DEFAULT_PORT = 8080;
 
     private Client() {
@@ -65,6 +65,10 @@ public class Client {
             return false;
         }
         return true;
+    }
+    
+    public String getIP() {
+        return ip;
     }
 
     public static Client getInstance() {

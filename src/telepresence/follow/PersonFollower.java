@@ -43,7 +43,7 @@ public class PersonFollower extends Thread {
     private static final long ROTATE_TIME_DELAY = 400;
     private static final long FWD_BWD_TIME_DELAY = 1000;
     private static final long WAIT_TIME_DELAY = 500;
-    private Client client = Client.getInstance("localhost", 8080);
+    private Client client = Client.getInstance();
     private BlobParameters oldParameters;
     private final ImagePanel imagePanel;
     private State state;
