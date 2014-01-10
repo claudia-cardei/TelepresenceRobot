@@ -19,6 +19,8 @@ import javax.imageio.ImageIO;
 
 import telepresence.communication.Client;
 import telepresence.communication.Commands;
+import telepresence.follow.PersonFollower;
+import telepresence.follow.WebcamCapture;
 import telepresence.map.FloorMap;
 
 /**
@@ -39,13 +41,18 @@ public class MainFrame extends javax.swing.JFrame {
     private ImagePanel robot;
     private MapMarker destination = null;
     private List<MapMarker> markers = new LinkedList<>();
-    
+    private WebcamCapture ownCamCapture;
+    private WebcamCapture camCapture;
+    private ActionPerformer actionPerformer;
+    private PersonFollower follower;
     /**
      * Creates new form MainFrame
      */
     public final void init() {
         initComponents();
-        new ActionPerformer().start();
+        actionPerformer = new ActionPerformer();
+        actionPerformer.start();
+        
         KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         manager.addKeyEventDispatcher(new MyDispatcher());
         try {
@@ -64,6 +71,24 @@ public class MainFrame extends javax.swing.JFrame {
             robot.setOpaque(false);
             robot.setBackground(new Color(0, 0, 0, 0));
             mainPanel.add(robot, 0);
+            
+            ImagePanel ownCamera = new ImagePanel();
+            ownCamera.setLayout(null);
+            ownCamera.setSize(ownPanel.getSize());
+            ownPanel.add(ownCamera);
+            
+            ownCamCapture = new WebcamCapture(ownCamera, true);
+            ownCamCapture.start();
+            
+            ImagePanel camera = new ImagePanel();
+            camera.setLayout(null);
+            camera.setSize(secondaryPanel.getSize());
+            secondaryPanel.add(camera);
+            
+            camCapture = new WebcamCapture(camera, false);
+            camCapture.start();
+            
+            
             
             
         } catch (IOException ex) {
@@ -130,11 +155,12 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     private class ActionPerformer extends Thread {
-
+        private boolean running = true;
+        
         @Override
         public void run() {
             try {
-                while (true) {
+                while (running) {
                     if (fwdBtnPressed) {
                         client.sendCommand(Commands.FWD1);
                         sleep(1000);
@@ -160,6 +186,10 @@ public class MainFrame extends javax.swing.JFrame {
             } catch (InterruptedException ex) {
                 ex.printStackTrace();
             }
+        }
+        
+        public void close() {
+            running = false;
         }
     }
     
@@ -194,6 +224,11 @@ public class MainFrame extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setPreferredSize(new java.awt.Dimension(800, 600));
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
+        });
 
         mainPanel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -424,7 +459,10 @@ public class MainFrame extends javax.swing.JFrame {
             
         }
         else {
-            
+            if (follower == null) {
+                follower = new PersonFollower(camCapture.getPanel());
+                follower.start();
+            }
         }
     }//GEN-LAST:event_actionButtonActionPerformed
 
@@ -463,9 +501,19 @@ public class MainFrame extends javax.swing.JFrame {
             }
         }
         else {
-            
+            if (follower != null) {
+                follower.close();
+                follower = null;
+            }
         }
     }//GEN-LAST:event_clearButtonActionPerformed
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        ownCamCapture.stopCapturing();
+        camCapture.stopCapturing();
+        actionPerformer.close();
+        if (follower != null) follower.close();
+    }//GEN-LAST:event_formWindowClosing
 
     /**
      * @param args the command line arguments

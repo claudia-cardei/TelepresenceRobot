@@ -3,33 +3,41 @@ package telepresence.gui;
 import com.googlecode.javacv.cpp.opencv_core.IplImage;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 public class ImagePanel extends JPanel {
 
 	private static final long serialVersionUID = -3108988905436849084L;
 	
-	private BufferedImage image;
+	private BufferedImage image = null;
 
     public ImagePanel(BufferedImage image) {
         this.image = image;
     }
     
+    public ImagePanel() {
+    }
+    
+        
     public void setBufferedImageFromIplImage(IplImage iplImage) {
     	image = iplImage.getBufferedImage();
     }
     
     public IplImage getIplImageFromBufferedImage() {
-    	return IplImage.createFrom(image);
+    	if (image == null) return null;
+        return IplImage.createFrom(image);
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        if (image == null) return;
         int panelWidth = getParent().getWidth();
         int panelHeight = getParent().getHeight();
         /*float scaleX = 1;

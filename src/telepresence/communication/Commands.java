@@ -17,5 +17,6 @@ public class Commands {
     public static final byte BWD = 'b';
     public static final byte LEFT45 = 'd';
     public static final byte RIGHT45 = 'g';
+    public static final byte BEEP = 'x';
      
 }
