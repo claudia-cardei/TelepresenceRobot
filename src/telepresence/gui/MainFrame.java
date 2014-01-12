@@ -211,7 +211,9 @@ public class MainFrame extends javax.swing.JFrame {
     }
     
     public void addMarker(int x, int y) {
-        markers.add(new MapMarker(x, y, Color.BLACK));
+        MapMarker marker = new MapMarker(x, y, Color.BLACK);
+        markers.add(marker);
+        mainPanel.add(marker, 0);
     }
     
     

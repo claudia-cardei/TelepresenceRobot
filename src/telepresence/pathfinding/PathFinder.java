@@ -801,8 +801,9 @@ public class PathFinder extends Thread implements Constants {
 			for (Position pos:path) {
 				marker = new MapMarker((int)pos.getX(), (int)pos.getY(), Color.GREEN);
 				markers.add(marker);
-				//mainFrame.addMarker((int)pos.getX(), (int)pos.getY());
+				mainFrame.addMarker((int)pos.getX(), (int)pos.getY());
 			}
+                        mainFrame.repaint();
 			System.out.println("Markers added.");
 			
 			i = path.size() - 1;
