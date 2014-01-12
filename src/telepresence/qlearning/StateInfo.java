@@ -6,7 +6,7 @@ import java.util.ArrayList;
  * @author Filip
  *
  */
-public class State implements Constants {
+public class StateInfo implements Constants {
 
 	Position robot;
 	Position robotReal;
@@ -23,7 +23,7 @@ public class State implements Constants {
 	StateActionEncoding encoder;
 	
 	
-	public State(Position firstObjective, Position secondObjective, double angle) {
+	public StateInfo(Position firstObjective, Position secondObjective, double angle) {
 		
 		actionTime = 0;
 		// Initialize the positions of the robot and the first and second objective

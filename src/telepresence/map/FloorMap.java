@@ -38,5 +38,7 @@ public class FloorMap {
         return floorImage;
     }
             
-    
+    public boolean[][] getBitmap() {
+    	return bitmap;
+    }
 }

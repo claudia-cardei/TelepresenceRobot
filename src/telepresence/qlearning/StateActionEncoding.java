@@ -31,7 +31,7 @@ public class StateActionEncoding implements Constants {
 	 * @param action the action
 	 * @return the encoding
 	 */
-	public long encode(State state, int action) {
+	public long encode(StateInfo state, int action) {
 		int n, encoding;
 		encoding = 0;
 		Position pos;

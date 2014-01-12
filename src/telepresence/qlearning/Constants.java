@@ -6,6 +6,7 @@ public interface Constants {
 	public static final double MAX_SPEED = 40;
 	public static final double DIAMETER = 45.72;	
 	public static final int SQUARES_RADIUS = 0;
+	public static final int IMAGE_SIZE = 40;
 	
 	// Q-learning
 	public static final double ALPHA = 0.4;

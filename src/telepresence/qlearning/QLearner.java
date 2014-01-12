@@ -98,11 +98,11 @@ public class QLearner implements Constants {
      * @param angle the robot's initial angle
      * @return the generated state
      */
-    public State generateInitialState(int x1, int y1, int x2, int y2, double angle) {
+    public StateInfo generateInitialState(int x1, int y1, int x2, int y2, double angle) {
         Position firstObjective = new Position(x1, y1);
         Position secondObjective = new Position(x2, y2);
 
-        State initialState = new State(firstObjective, secondObjective, angle);
+        StateInfo initialState = new StateInfo(firstObjective, secondObjective, angle);
 
         return initialState;
     }
@@ -271,7 +271,7 @@ public class QLearner implements Constants {
         Long chosenStateAction;
         SelectionResult result;
         int steps = 0;
-        State state = generateInitialState(x1, y1, x2, y2, angle);
+        StateInfo state = generateInitialState(x1, y1, x2, y2, angle);
         double oldScore, newScore, maxScore;
         ArrayList<Long> actions;
 

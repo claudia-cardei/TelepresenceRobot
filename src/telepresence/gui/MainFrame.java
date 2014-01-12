@@ -22,6 +22,8 @@ import telepresence.communication.Commands;
 import telepresence.follow.PersonFollower;
 import telepresence.follow.WebcamCapture;
 import telepresence.map.FloorMap;
+import telepresence.pathfinding.PathFinder;
+import telepresence.qlearning.QLearner;
 
 /**
  *
@@ -40,11 +42,13 @@ public class MainFrame extends javax.swing.JFrame {
     
     private ImagePanel robot;
     private MapMarker destination = null;
-    private List<MapMarker> markers = new LinkedList<>();
+    private List<MapMarker> markers = new LinkedList<MapMarker>();
     private WebcamCapture ownCamCapture;
     private WebcamCapture camCapture;
     private ActionPerformer actionPerformer;
     private PersonFollower follower;
+    private PathFinder pathFinder;
+    
     /**
      * Creates new form MainFrame
      */
@@ -67,7 +71,7 @@ public class MainFrame extends javax.swing.JFrame {
             robot = new ImagePanel(robotImage);
             robot.setLayout(null);
             robot.setSize(robotImage.getWidth(), robotImage.getHeight());
-            robot.setLocation(100, 100);
+            robot.setLocation(100, 150);
             robot.setOpaque(false);
             robot.setBackground(new Color(0, 0, 0, 0));
             mainPanel.add(robot, 0);
@@ -88,7 +92,14 @@ public class MainFrame extends javax.swing.JFrame {
             camCapture = new WebcamCapture(camera, false);
             camCapture.start();
             
-            
+            // Read Q
+            new Thread() {
+            	@Override
+            	public void run() {
+            		PathFinder.learner = new QLearner("q-old.txt");	
+            		System.out.println("Q read.");
+            	}
+            }.start();
             
             
         } catch (IOException ex) {
@@ -458,7 +469,15 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void actionButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_actionButtonActionPerformed
         if (mapMode) {
-            
+        	if ( pathFinder == null ) {
+	            // Go pressed
+	        	// new thread cu run
+	        	// in run fac mutarile, setez noua pozitie a robotului, repaint
+        		// trebuie adaugate mutarile in ceva
+        		// trebuie setata pozitia robotului
+        		pathFinder = new PathFinder(map, robot, destination, markers, this);
+        		pathFinder.start();
+        	}
         }
         else {
             if (follower == null) {
@@ -507,6 +526,11 @@ public class MainFrame extends javax.swing.JFrame {
                 follower.close();
                 follower = null;
             }
+            
+            if ( pathFinder != null ) {
+            	pathFinder.close();
+            	pathFinder = null;
+            }
         }
     }//GEN-LAST:event_clearButtonActionPerformed
 
@@ -515,7 +539,9 @@ public class MainFrame extends javax.swing.JFrame {
         camCapture.stopCapturing();
         actionPerformer.close();
         if (follower != null) follower.close();
+        if (pathFinder != null) pathFinder.close();
     }//GEN-LAST:event_formWindowClosing
+    
 
     /**
      * @param args the command line arguments
@@ -548,7 +574,7 @@ public class MainFrame extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new MainFrame("192.168.137.25", 8080).setVisible(true);
+                new MainFrame("localhost", 8080).setVisible(true);
             }
         });
     }

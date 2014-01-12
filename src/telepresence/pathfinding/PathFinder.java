@@ -1,15 +1,22 @@
 package telepresence.pathfinding;
 
+import java.util.List;
+import java.awt.Color;
+import java.awt.Point;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import telepresence.gui.ImagePanel;
+import telepresence.gui.MainFrame;
+import telepresence.gui.MapMarker;
+import telepresence.map.FloorMap;
 import telepresence.qlearning.Action;
 import telepresence.qlearning.Constants;
 import telepresence.qlearning.Position;
 import telepresence.qlearning.QLearner;
-import telepresence.qlearning.State;
+import telepresence.qlearning.StateInfo;
 
 
 /**
@@ -19,10 +26,10 @@ import telepresence.qlearning.State;
  * @author Filip
  *
  */
-public class PathFinder implements Constants {
+public class PathFinder extends Thread implements Constants {
 
 	// The Q structure
-	QLearner learner;
+	public static QLearner learner;
 	
 	// The robot's position
 	Position robot;
@@ -34,10 +41,63 @@ public class PathFinder implements Constants {
 	int n, m;	
 	int[][] map;
 	
+	// The destination
+	Position destination;
+	
+	// The list of markers for the ideal path
+	List<MapMarker> markers;
+	
+	MainFrame mainFrame;
+	
+    private boolean running = true;
+    
+    public static final String defaultQFile = "q-old.txt";
+	
 	
 	public PathFinder(String qFile, String mapFile) {
 		readQ(qFile);
 		readMap(mapFile);
+	}
+	
+	
+	/**
+	 * Get all the parameters from the graphical interface
+	 * @param map
+	 * @param robot
+	 * @param destination
+	 * @param markers
+	 * @param mainFrame
+	 */
+	public PathFinder(FloorMap map, ImagePanel robot, MapMarker destination, List<MapMarker> markers, MainFrame mainFrame) {
+    	boolean[][] bitmap = map.getBitmap();
+    	int i, j;
+    	
+    	this.mainFrame = mainFrame;
+    	
+    	// Initialize map
+    	n = bitmap.length;
+    	m = bitmap[1].length;
+    	this.map = new int[n][m];
+    	
+		for (i = 0; i < bitmap.length; i++) {
+			for (j = 0; j < bitmap[i].length;j++) {
+				if ( bitmap[i][j] == false ) 
+					this.map[i][j] = 1;
+				else
+					this.map[i][j] = 0;
+			}
+		}
+		
+		// Set robot position
+		Point robotPos = robot.getLocation();
+		setRobotPosition((int)robotPos.getX(), (int)robotPos.getY(), 270);
+		
+		// Set  destination
+		this.destination = new Position(destination.getCenterX() - IMAGE_SIZE/2, destination.getCenterY() - IMAGE_SIZE/2); 
+		System.out.println("Destination: " + destination.getCenterX() + " " + destination.getCenterY());
+		
+		// Set marker list
+		this.markers = markers; 
 	}
 	
 	
@@ -254,6 +314,8 @@ public class PathFinder implements Constants {
 		ArrayList<Position> pathCells = new ArrayList<Position>();
 		ArrayList<Position> queue = new ArrayList<Position>();
 		ArrayList<Integer> parent = new ArrayList<Integer>();
+		boolean[][] visited = new boolean[n][m];
+		
 		// The available moves
 		int[] dx = {0, 1, 0, -1, 1, 1, -1, -1};
 		int[] dy = {-1, 0, 1, 0, -1, 1, 1, -1};
@@ -263,6 +325,9 @@ public class PathFinder implements Constants {
 		
 		queue.add(start);
 		parent.add(-1);
+		
+		System.out.println(start.getX() + " " + start.getY());
+		System.out.println(destination.getX() + " " + destination.getY());
 		
 		i = 0;
 		// Use a queue, in which all valid neighbors are added
@@ -277,11 +342,12 @@ public class PathFinder implements Constants {
 				// Check if the position is valid
 				if ( neighbour.getX() > -1 && neighbour.getX() < m 
 						&& neighbour.getY() > -1 && neighbour.getY() < n
-						&& !queue.contains(neighbour) && checkMove(current, neighbour) ) { 
+						&& !visited[(int) neighbour.getY()][(int) neighbour.getX()] && checkMove(current, neighbour) ) {
 					
 					queue.add(neighbour);
+					visited[(int) neighbour.getY()][(int) neighbour.getX()] = true;
 					parent.add(i);
-					
+										
 					// Check if it is the goal
 					if ( neighbour.equals(goal) ) {
 						goalReached = true;
@@ -291,7 +357,7 @@ public class PathFinder implements Constants {
 									
 			}
 			if ( !goalReached )
-				i++;			
+				i++;	
 		}
 		
 		// If the goal has been reached, add all the cells from the pfound path
@@ -338,7 +404,7 @@ public class PathFinder implements Constants {
 	 * @param secondObjective the position of the second objective
 	 * @return the final real position of the robot
 	 */
-	public Position getRobotMoves(State state, Position firstObjective, Position secondObjective) {
+	public Position getRobotMoves(StateInfo state, Position firstObjective, Position secondObjective) {
 		Long chosenStateAction;
 		ArrayList<Action> actions = new ArrayList<Action>();
 		Action action;
@@ -389,7 +455,7 @@ public class PathFinder implements Constants {
 		Position resultPosition, last, current, firstCell, secondCell, robotReal, firstObjective = null, secondObjective = null;
 		int i, windowType, dX, dY;
 		double angle;
-		State state = null;
+		StateInfo state = null;
 		moves = new ArrayList<String>();
 		
 		// Set the real position of the robot
@@ -476,7 +542,7 @@ public class PathFinder implements Constants {
 							(SECOND_SQUARES_UP + FIRST_SQUARES_UP - dX) * SQUARE_SIZE + SQUARE_SIZE / 2);
 					
 					// Set the window for the Qlearning algorithm
-					state = new State(firstObjective, secondObjective, angle);
+					state = new StateInfo(firstObjective, secondObjective, angle);
 
 					// Use the Qlearning results and get the robot's resulting position
 					resultPosition = getRobotMoves(state, firstObjective, secondObjective);
@@ -529,7 +595,7 @@ public class PathFinder implements Constants {
 							(SECOND_SQUARES_UP + FIRST_SQUARES_UP - dY) * SQUARE_SIZE + SQUARE_SIZE / 2);
 
 					// Set the window for the Qlearning algorithm
-					state = new State(firstObjective, secondObjective, angle);
+					state = new StateInfo(firstObjective, secondObjective, angle);
 
 					// Use the Qlearning results and get the robot's resulting position
 					resultPosition = getRobotMoves(state, firstObjective, secondObjective);
@@ -582,7 +648,7 @@ public class PathFinder implements Constants {
 							(SECOND_SQUARES_UP + FIRST_SQUARES_UP + dX) * SQUARE_SIZE + SQUARE_SIZE / 2);
 
 					// Set the window for the Qlearning algorithm
-					state = new State(firstObjective, secondObjective, angle);
+					state = new StateInfo(firstObjective, secondObjective, angle);
 
 					// Use the Qlearning results and get the robot's resulting position
 					resultPosition = getRobotMoves(state, firstObjective, secondObjective);
@@ -633,7 +699,7 @@ public class PathFinder implements Constants {
 							(SECOND_SQUARES_UP + FIRST_SQUARES_UP + dY) * SQUARE_SIZE + SQUARE_SIZE / 2);
 
 					// Set the window for the Qlearning algorithm
-					state = new State(firstObjective, secondObjective, angle);
+					state = new StateInfo(firstObjective, secondObjective, angle);
 					
 					// Use the Qlearning results and get the robot's resulting position
 					resultPosition = getRobotMoves(state, firstObjective, secondObjective);
@@ -668,7 +734,343 @@ public class PathFinder implements Constants {
 	}
 	
 	
-	public static void main(String[] args) {
+	/**
+	 * Get an ideal path using bfs
+	 * @return
+	 */
+	public ArrayList<Position> getPath() {
+		ArrayList<Position> path;
+		Position last, current;
+		int i;
+		moves = new ArrayList<String>();
+		
+		// Get BFS path
+		path = bfs(robot, destination);
+		
+		// If no path was found
+		if ( path.isEmpty() ) {
+			System.out.println("empty");
+			return null;
+		}
+		
+		// Remove non-important cells from the path, but keep the first and last cells
+		i = 1;
+		last = path.get(0);
+		while ( i < path.size() - 1 ) {
+			current = path.get(i);
+			
+			if ( last.distance(current) >= FIRST_SQUARES_UP - 1 || last.distance(current) >= FIRST_SQUARES_SIDE - 1 ) {
+				last = current;
+				i++;
+			}
+			else
+				path.remove(i);
+		}
+		
+		// Mark the positions of the path cells
+		for (i = path.size() - 1; i >= 0; i--) {
+			//System.out.println(path.get(i).getX() + " " + path.get(i).getY());
+			map[(int) path.get(i).getY()][(int) path.get(i).getX()] = 7;
+		}
+		
+		return path;
+	}
+	
+	
+	@Override
+    public void run() {
+
+		while ( learner == null ) {
+		}
+
+		// Get the BFS path
+		ArrayList<Position> path = getPath();
+		
+		MapMarker marker;
+		StateInfo state;
+		Position robotReal, current, firstCell, secondCell, firstObjective = null, secondObjective = null, resultPosition;
+		int i, windowType, dX, dY;
+		double angle;
+		
+		if ( path != null && !path.isEmpty() ) {
+			
+			// Set the real position of the robot
+			robotReal = new Position(robot.getX() * SQUARE_SIZE + SQUARE_SIZE / 2, robot.getY() * SQUARE_SIZE + SQUARE_SIZE / 2, robot.getAngle());
+					
+			// Add markers
+			for (Position pos:path) {
+				marker = new MapMarker((int)pos.getX(), (int)pos.getY(), Color.GREEN);
+				markers.add(marker);
+				//mainFrame.addMarker((int)pos.getX(), (int)pos.getY());
+			}
+			System.out.println("Markers added.");
+			
+			i = path.size() - 1;
+			
+	        while (running && i >= 1) {
+	        	
+				current = path.get(i);
+				firstCell = path.get(i - 1);
+				if ( i - 2 >= 0 )
+					secondCell = path.get(i - 2);
+				else {
+					secondCell = new Position(firstCell.getX() + (firstCell.getX() - robot.getX()), firstCell.getY() + (firstCell.getY() - robot.getY()));
+				}
+				
+				// Get the window orientation
+				windowType = windowOrientation(current, firstCell);
+	
+				System.out.print("\nTransition: " + current.getX() + " " + current.getY() + "-> " + firstCell.getX() + " " + firstCell.getY() + "-> " + secondCell.getX() + " " + secondCell.getY() + ", window type: " + windowType + "\n");
+										
+				// Apply different position transformations for each possible orientation of the window
+				switch (windowType) {
+				
+					// Right
+					case 0: {
+						
+						// If the first angle is not appropriate for the movement, make a rotation
+						if ( i == path.size() - 1 && !(robot.getAngle() >= 180 && robot.getAngle() < 360) ) {
+							robot.addAngle(180);
+							robotReal.addAngle(180);
+							System.out.println("ROTATE 180");
+							moves.add("ROTATE 180");
+						}
+						
+						// Change the angle in order to put it in the [-90,90] interval, which was used for Qlearning
+						angle = robot.getAngle() - 270;
+						if ( angle < 0 )
+							angle = 360 + angle;
+						
+						// Get the OX and OY difference between the robot's position and the first objective
+						dX = (int) (firstCell.getX() - robot.getX());
+						dY = (int) (firstCell.getY() - robot.getY());
+						
+						// Translate the first objective according to the window orientation
+						firstObjective = new Position(
+								(SECOND_SQUARES_SIDE + FIRST_SQUARES_SIDE + dY) * SQUARE_SIZE + SQUARE_SIZE / 2, 
+								(SECOND_SQUARES_UP + FIRST_SQUARES_UP - dX) * SQUARE_SIZE + SQUARE_SIZE / 2);
+	
+						// Get the OX and OY difference between the robot's position and the second objective
+						dX = (int) (secondCell.getX() - robot.getX());
+						dY = (int) (secondCell.getY() - robot.getY());
+	
+						// Translate the second objective according to the window orientation
+						secondObjective = new Position(
+								(SECOND_SQUARES_SIDE + FIRST_SQUARES_SIDE + dY) * SQUARE_SIZE + SQUARE_SIZE / 2, 
+								(SECOND_SQUARES_UP + FIRST_SQUARES_UP - dX) * SQUARE_SIZE + SQUARE_SIZE / 2);
+						
+						// Set the window for the Qlearning algorithm
+						state = new StateInfo(firstObjective, secondObjective, angle);
+	
+						// Use the Qlearning results and get the robot's resulting position
+						resultPosition = getRobotMoves(state, firstObjective, secondObjective);
+	
+						// Update the robot's real position and cell position 
+						robotReal.addX(- (resultPosition.getY() - ROBOT_Y));
+						robotReal.addY(+ (resultPosition.getX() - ROBOT_X));
+						robotReal.addAngle(resultPosition.getAngle());					
+						robot.setX((int)(robotReal.getX() / SQUARE_SIZE));
+						robot.setY((int)(robotReal.getY() / SQUARE_SIZE));
+						robot.setAngle(robotReal.getAngle());
+	
+						System.out.println("Result: " + robotReal.getX() + " " + robotReal.getY() + " "+ robotReal.getAngle() + "\n");
+						
+						break;
+					}
+					
+					// Down
+					case 1: {
+						
+						// If the first angle is not appropriate for the movement, make a rotation
+						if ( i == path.size() - 1 && !(robot.getAngle() >= 90 && robot.getAngle() < 270) ) {
+							robot.addAngle(180);
+							robotReal.addAngle(180);
+							System.out.println("ROTATE 180");
+							moves.add("ROTATE 180");
+						}
+	
+						// Change the angle in order to put it in the [-90,90] interval, which was used for Qlearning
+						angle = robot.getAngle() - 180;
+						if ( angle < 0 )
+							angle = 360 + angle;					
+	
+						// Get the OX and OY difference between the robot's position and the first objective
+						dX = (int) (firstCell.getX() - robot.getX());
+						dY = (int) (firstCell.getY() - robot.getY());
+	
+						// Translate the first objective according to the window orientation
+						firstObjective = new Position(
+								(SECOND_SQUARES_SIDE + FIRST_SQUARES_SIDE - dX) * SQUARE_SIZE + SQUARE_SIZE / 2, 
+								(SECOND_SQUARES_UP + FIRST_SQUARES_UP - dY) * SQUARE_SIZE + SQUARE_SIZE / 2);
+	
+						// Get the OX and OY difference between the robot's position and the second objective
+						dX = (int) (secondCell.getX() - robot.getX());
+						dY = (int) (secondCell.getY() - robot.getY());
+	
+						// Translate the second objective according to the window orientation
+						secondObjective = new Position(
+								(SECOND_SQUARES_SIDE + FIRST_SQUARES_SIDE - dX) * SQUARE_SIZE + SQUARE_SIZE / 2, 
+								(SECOND_SQUARES_UP + FIRST_SQUARES_UP - dY) * SQUARE_SIZE + SQUARE_SIZE / 2);
+	
+						// Set the window for the Qlearning algorithm
+						state = new StateInfo(firstObjective, secondObjective, angle);
+	
+						// Use the Qlearning results and get the robot's resulting position
+						resultPosition = getRobotMoves(state, firstObjective, secondObjective);
+	
+						// Update the robot's real position and cell position
+						robotReal.addX(- (resultPosition.getX() - ROBOT_X));
+						robotReal.addY(- (resultPosition.getY() - ROBOT_Y));
+						robotReal.addAngle(resultPosition.getAngle());					
+						robot.setX((int)(robotReal.getX() / SQUARE_SIZE));
+						robot.setY((int)(robotReal.getY() / SQUARE_SIZE));
+						robot.setAngle(robotReal.getAngle());
+	
+						System.out.println("Result: " + robotReal.getX() + " " + robotReal.getY() + " "+ robotReal.getAngle() + "\n");
+						
+						break;
+					}
+					
+					// Left
+					case 2: {	
+						
+						// If the first angle is not appropriate for the movement, make a rotation
+						if ( i == path.size() - 1 && !(robot.getAngle() >= 0 && robot.getAngle() < 180) ) {
+							robot.addAngle(180);
+							robotReal.addAngle(180);
+							System.out.println("ROTATE 180");
+							moves.add("ROTATE 180");
+						}
+	
+						// Change the angle in order to put it in the [-90,90] interval, which was used for Qlearning
+						angle = robot.getAngle() - 90;
+						if ( angle < 0 )
+							angle = 360 + angle;	
+	
+						// Get the OX and OY difference between the robot's position and the first objective
+						dX = (int) (firstCell.getX() - robot.getX());
+						dY = (int) (firstCell.getY() - robot.getY());
+	
+						// Translate the first objective according to the window orientation
+						firstObjective = new Position(
+								(SECOND_SQUARES_SIDE + FIRST_SQUARES_SIDE - dY) * SQUARE_SIZE + SQUARE_SIZE / 2, 
+								(SECOND_SQUARES_UP + FIRST_SQUARES_UP + dX) * SQUARE_SIZE + SQUARE_SIZE / 2);
+	
+						// Get the OX and OY difference between the robot's position and the second objective
+						dX = (int) (secondCell.getX() - robot.getX());
+						dY = (int) (secondCell.getY() - robot.getY());
+	
+						// Translate the second objective according to the window orientation
+						secondObjective = new Position(
+								(SECOND_SQUARES_SIDE + FIRST_SQUARES_SIDE - dY) * SQUARE_SIZE + SQUARE_SIZE / 2, 
+								(SECOND_SQUARES_UP + FIRST_SQUARES_UP + dX) * SQUARE_SIZE + SQUARE_SIZE / 2);
+	
+						// Set the window for the Qlearning algorithm
+						state = new StateInfo(firstObjective, secondObjective, angle);
+	
+						// Use the Qlearning results and get the robot's resulting position
+						resultPosition = getRobotMoves(state, firstObjective, secondObjective);
+	
+						// Update the robot's real position and cell position
+						robotReal.addX(+ (resultPosition.getY() - ROBOT_Y));
+						robotReal.addY(- (resultPosition.getX() - ROBOT_X));
+						robotReal.addAngle(resultPosition.getAngle());					
+						robot.setX((int)(robotReal.getX() / SQUARE_SIZE));
+						robot.setY((int)(robotReal.getY() / SQUARE_SIZE));
+						robot.setAngle(robotReal.getAngle());
+	
+						System.out.println("Result: " + robotReal.getX() + " " + robotReal.getY() + " "+ robotReal.getAngle() + "\n");
+						
+						break;
+					}
+					
+					// Up
+					case 3: {	
+						
+						// If the first angle is not appropriate for the movement, make a rotation
+						if ( i == path.size() - 1 && !(robot.getAngle() >= 270 || robot.getAngle() < 90) ) {
+							robot.addAngle(180);
+							robotReal.addAngle(180);
+							System.out.println("ROTATE 180");
+							moves.add("ROTATE 180");
+						}
+	
+						// Change the angle in order to put it in the [-90,90] interval, which was used for Qlearning
+						angle = robot.getAngle();
+	
+						// Get the OX and OY difference between the robot's position and the first objective
+						dX = (int) (firstCell.getX() - robot.getX());
+						dY = (int) (firstCell.getY() - robot.getY());
+	
+						// Translate the first objective according to the window orientation
+						firstObjective = new Position(
+								(SECOND_SQUARES_SIDE + FIRST_SQUARES_SIDE + dX) * SQUARE_SIZE + SQUARE_SIZE / 2, 
+								(SECOND_SQUARES_UP + FIRST_SQUARES_UP + dY) * SQUARE_SIZE + SQUARE_SIZE / 2);
+	
+						// Get the OX and OY difference between the robot's position and the second objective
+						dX = (int) (secondCell.getX() - robot.getX());
+						dY = (int) (secondCell.getY() - robot.getY());
+	
+						// Translate the second objective according to the window orientation
+						secondObjective = new Position(
+								(SECOND_SQUARES_SIDE + FIRST_SQUARES_SIDE + dX) * SQUARE_SIZE + SQUARE_SIZE / 2, 
+								(SECOND_SQUARES_UP + FIRST_SQUARES_UP + dY) * SQUARE_SIZE + SQUARE_SIZE / 2);
+	
+						// Set the window for the Qlearning algorithm
+						state = new StateInfo(firstObjective, secondObjective, angle);
+						
+						// Use the Qlearning results and get the robot's resulting position
+						resultPosition = getRobotMoves(state, firstObjective, secondObjective);
+	
+						// Update the robot's real position and cell position
+						robotReal.addX(+ (resultPosition.getX() - ROBOT_X));
+						robotReal.addY(+ (resultPosition.getY() - ROBOT_Y));
+						robotReal.addAngle(resultPosition.getAngle());					
+						robot.setX((int)(robotReal.getX() / SQUARE_SIZE));
+						robot.setY((int)(robotReal.getY() / SQUARE_SIZE));
+						robot.setAngle(robotReal.getAngle());
+						
+						System.out.println("Result: " + robotReal.getX() + " " + robotReal.getY() + " "+ robotReal.getAngle() + "\n");
+						
+						break;
+					}
+				}
+				
+				// Set the robot's new position
+				mainFrame.setRobotPosition((int)(robotReal.getX() / SQUARE_SIZE), (int)(robotReal.getY() / SQUARE_SIZE));
+				mainFrame.repaint();
+				
+				try {
+					Thread.sleep(300);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				
+	        	i--;
+	        	
+	        	
+			}
+	               	
+	        	
+	        
+	        if (running) {
+	        	System.out.println("Thread closed.");
+	        	close();
+	        }
+		}
+		
+		else {
+			System.out.println("No solution found.");
+			close();
+		}
+    }
+
+    public void close() {
+        running = false;
+    }
+	
+	
+	/*public static void main(String[] args) {
 		PathFinder finder = new PathFinder("q.txt", "map.txt");
 		
 		// Set the robot's initial position
@@ -676,5 +1078,5 @@ public class PathFinder implements Constants {
 		
 		// Move the robot to a goal position 
 		finder.move(new Position(10, 5));
-	}
+	}*/
 }
