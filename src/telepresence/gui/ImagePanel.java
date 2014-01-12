@@ -15,7 +15,7 @@ public class ImagePanel extends JPanel {
 
 	private static final long serialVersionUID = -3108988905436849084L;
 	
-	private BufferedImage image = null;
+	protected BufferedImage image = null;
 
     public ImagePanel(BufferedImage image) {
         this.image = image;

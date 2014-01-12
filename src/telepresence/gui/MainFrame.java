@@ -31,16 +31,20 @@ import telepresence.qlearning.QLearner;
  */
 public class MainFrame extends javax.swing.JFrame {
 
+    private static final String ACTION_BTN_FOLLOW = "Start following";
+    private static final String ACTION_BTN_FOLLOW_STOP = "Stop following";
+    private static final String ACTION_BTN_MAP = "Go to destination";
+    private static final String ACTION_BTN_MAP_STOP = "Stop";
+    
+    
     private static Client client;
     private static FloorMap map;
-   
     private boolean fwdBtnPressed = false;
     private boolean rightBtnPressed = false;
     private boolean bwdBtnPressed = false;
     private boolean leftBtnPressed = false;
     private boolean mapMode = true;
-    
-    private ImagePanel robot;
+    private RobotPanel robot;
     private MapMarker destination = null;
     private List<MapMarker> markers = new LinkedList<MapMarker>();
     private WebcamCapture ownCamCapture;
@@ -48,7 +52,7 @@ public class MainFrame extends javax.swing.JFrame {
     private ActionPerformer actionPerformer;
     private PersonFollower follower;
     private PathFinder pathFinder;
-    
+
     /**
      * Creates new form MainFrame
      */
@@ -56,7 +60,7 @@ public class MainFrame extends javax.swing.JFrame {
         initComponents();
         actionPerformer = new ActionPerformer();
         actionPerformer.start();
-        
+
         KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         manager.addKeyEventDispatcher(new MyDispatcher());
         try {
@@ -65,43 +69,38 @@ public class MainFrame extends javax.swing.JFrame {
             image.setLayout(null);
             image.setSize(mainPanel.getSize());
             mainPanel.add(image);
-            
+
             BufferedImage robotImage;
             robotImage = ImageIO.read(new File("wall-e.png"));
-            robot = new ImagePanel(robotImage);
-            robot.setLayout(null);
-            robot.setSize(robotImage.getWidth(), robotImage.getHeight());
-            robot.setLocation(100, 150);
-            robot.setOpaque(false);
-            robot.setBackground(new Color(0, 0, 0, 0));
+            robot = new RobotPanel(robotImage);
             mainPanel.add(robot, 0);
-            
+
             ImagePanel ownCamera = new ImagePanel();
             ownCamera.setLayout(null);
             ownCamera.setSize(ownPanel.getSize());
             ownPanel.add(ownCamera);
-            
+
             ownCamCapture = new WebcamCapture(ownCamera, true);
             ownCamCapture.start();
-            
+
             ImagePanel camera = new ImagePanel();
             camera.setLayout(null);
             camera.setSize(secondaryPanel.getSize());
             secondaryPanel.add(camera);
-            
+
             camCapture = new WebcamCapture(camera, false);
             camCapture.start();
-            
+
             // Read Q
             new Thread() {
-            	@Override
-            	public void run() {
-            		PathFinder.learner = new QLearner("q-old.txt");	
-            		System.out.println("Q read.");
-            	}
+                @Override
+                public void run() {
+                    PathFinder.learner = new QLearner("q-old.txt");
+                    System.out.println("Q read.");
+                }
             }.start();
-            
-            
+
+
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -110,13 +109,13 @@ public class MainFrame extends javax.swing.JFrame {
     public MainFrame() {
         client = Client.getInstance();
         init();
-        
+
     }
 
     public MainFrame(String ip, int port) {
         client = Client.getInstance(ip, port);
         init();
-        
+
     }
 
     private class MyDispatcher implements KeyEventDispatcher {
@@ -150,7 +149,7 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     private void keyReleased(java.awt.event.KeyEvent evt) {
-        
+
         switch (evt.getKeyCode()) {
             case KeyEvent.VK_UP:
                 fwdButtonMouseReleased(null);
@@ -168,8 +167,9 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     private class ActionPerformer extends Thread {
+
         private boolean running = true;
-        
+
         @Override
         public void run() {
             try {
@@ -200,23 +200,34 @@ public class MainFrame extends javax.swing.JFrame {
                 ex.printStackTrace();
             }
         }
-        
+
         public void close() {
             running = false;
         }
     }
-    
+
     public void setRobotPosition(int x, int y) {
-        robot.setLocation(x, y);
+        robot.setCenterLocation(x, y);
     }
-    
+
     public void addMarker(int x, int y) {
-        MapMarker marker = new MapMarker(x, y, Color.BLACK);
+        MapMarker marker = new MapMarker(x, y, Color.GREEN);
         markers.add(marker);
         mainPanel.add(marker, 0);
     }
-    
-    
+
+    public void pathFinderClosing() {
+        pathFinder = null;
+        if (destination != null) mainPanel.remove(destination);
+        destination = null;
+        for (MapMarker m : markers) {
+            mainPanel.remove(m);
+        }
+        markers.clear();
+        actionButton.setText(ACTION_BTN_MAP);
+        repaint();
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -238,13 +249,14 @@ public class MainFrame extends javax.swing.JFrame {
         clearButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setPreferredSize(new java.awt.Dimension(800, 600));
+        setPreferredSize(new java.awt.Dimension(800, 450));
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 formWindowClosing(evt);
             }
         });
 
+        mainPanel.setPreferredSize(new java.awt.Dimension(640, 360));
         mainPanel.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 mainPanelMouseClicked(evt);
@@ -255,11 +267,11 @@ public class MainFrame extends javax.swing.JFrame {
         mainPanel.setLayout(mainPanelLayout);
         mainPanelLayout.setHorizontalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 629, Short.MAX_VALUE)
+            .addGap(0, 640, Short.MAX_VALUE)
         );
         mainPanelLayout.setVerticalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 519, Short.MAX_VALUE)
+            .addGap(0, 360, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout ownPanelLayout = new javax.swing.GroupLayout(ownPanel);
@@ -270,7 +282,7 @@ public class MainFrame extends javax.swing.JFrame {
         );
         ownPanelLayout.setVerticalGroup(
             ownPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 115, Short.MAX_VALUE)
+            .addGap(0, 90, Short.MAX_VALUE)
         );
 
         fwdButton.setText("fwd");
@@ -313,15 +325,17 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
 
+        secondaryPanel.setPreferredSize(new java.awt.Dimension(115, 90));
+
         javax.swing.GroupLayout secondaryPanelLayout = new javax.swing.GroupLayout(secondaryPanel);
         secondaryPanel.setLayout(secondaryPanelLayout);
         secondaryPanelLayout.setHorizontalGroup(
             secondaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 104, Short.MAX_VALUE)
+            .addGap(0, 115, Short.MAX_VALUE)
         );
         secondaryPanelLayout.setVerticalGroup(
             secondaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 105, Short.MAX_VALUE)
+            .addGap(0, 90, Short.MAX_VALUE)
         );
 
         modeButton.setText("Camera");
@@ -352,25 +366,30 @@ public class MainFrame extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(mainPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(8, 8, 8)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(leftButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(rightButton))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addGap(0, 0, Short.MAX_VALUE)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                        .addComponent(fwdButton)
+                                        .addGap(34, 34, 34))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                        .addComponent(bwdButton)
+                                        .addGap(35, 35, 35))))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(ownPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 17, Short.MAX_VALUE))))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(ownPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap())
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(fwdButton)
-                        .addGap(34, 34, 34))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(bwdButton)
-                        .addGap(35, 35, 35))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                            .addComponent(leftButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                            .addComponent(rightButton))
-                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                            .addComponent(secondaryPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addContainerGap()))))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(secondaryPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap())
             .addGroup(layout.createSequentialGroup()
                 .addGap(108, 108, 108)
                 .addComponent(modeButton)
@@ -383,12 +402,14 @@ public class MainFrame extends javax.swing.JFrame {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(mainPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(mainPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(41, 41, 41)
                         .addComponent(ownPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
+                        .addGap(28, 28, 28)
                         .addComponent(fwdButton)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -396,21 +417,23 @@ public class MainFrame extends javax.swing.JFrame {
                             .addComponent(leftButton))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(bwdButton)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(secondaryPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(modeButton)
                     .addComponent(actionButton)
                     .addComponent(clearButton))
-                .addContainerGap(16, Short.MAX_VALUE))
+                .addContainerGap(38, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void fwdButtonMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_fwdButtonMousePressed
-        if (fwdBtnPressed) return;
+        if (fwdBtnPressed) {
+            return;
+        }
         fwdBtnPressed = true;
         System.out.println("fwd pressed");
     }//GEN-LAST:event_fwdButtonMousePressed
@@ -421,7 +444,9 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_fwdButtonMouseReleased
 
     private void rightButtonMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_rightButtonMousePressed
-        if (rightBtnPressed) return;
+        if (rightBtnPressed) {
+            return;
+        }
         rightBtnPressed = true;
         System.out.println("right pressed");
     }//GEN-LAST:event_rightButtonMousePressed
@@ -432,7 +457,9 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_rightButtonMouseReleased
 
     private void bwdButtonMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_bwdButtonMousePressed
-        if (bwdBtnPressed) return;
+        if (bwdBtnPressed) {
+            return;
+        }
         bwdBtnPressed = true;
         System.out.println("bwd pressed");
     }//GEN-LAST:event_bwdButtonMousePressed
@@ -443,7 +470,9 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_bwdButtonMouseReleased
 
     private void leftButtonMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_leftButtonMousePressed
-        if (leftBtnPressed) return;
+        if (leftBtnPressed) {
+            return;
+        }
         leftBtnPressed = true;
         System.out.println("left pressed");
     }//GEN-LAST:event_leftButtonMousePressed
@@ -455,6 +484,7 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void mainPanelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_mainPanelMouseClicked
         if (mapMode) {
+            if (pathFinder != null) return;
             if (destination != null) {
                 mainPanel.remove(destination);
                 for (MapMarker m : markers) {
@@ -471,20 +501,31 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void actionButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_actionButtonActionPerformed
         if (mapMode) {
-        	if ( pathFinder == null ) {
-	            // Go pressed
-	        	// new thread cu run
-	        	// in run fac mutarile, setez noua pozitie a robotului, repaint
-        		// trebuie adaugate mutarile in ceva
-        		// trebuie setata pozitia robotului
-        		pathFinder = new PathFinder(map, robot, destination, markers, this);
-        		pathFinder.start();
-        	}
-        }
-        else {
+            if (pathFinder == null) {
+                // Go pressed
+                // new thread cu run
+                // in run fac mutarile, setez noua pozitie a robotului, repaint
+                // trebuie adaugate mutarile in ceva
+                // trebuie setata pozitia robotului
+                pathFinder = new PathFinder(map, robot, destination, this);
+                pathFinder.start();
+                actionButton.setText(ACTION_BTN_MAP_STOP);
+            }
+            else {
+                pathFinder.close();
+                pathFinder = null;
+                actionButton.setText(ACTION_BTN_MAP);
+            }
+        } else {
             if (follower == null) {
                 follower = new PersonFollower(camCapture.getPanel());
                 follower.start();
+                actionButton.setText(ACTION_BTN_FOLLOW_STOP);
+            }
+            else {
+                follower.close();
+                follower = null;
+                actionButton.setText(ACTION_BTN_FOLLOW);
             }
         }
     }//GEN-LAST:event_actionButtonActionPerformed
@@ -502,48 +543,42 @@ public class MainFrame extends javax.swing.JFrame {
         if (mapMode) {
             mapMode = false;
             modeButton.setText("Map");
-            actionButton.setText("Start following");
-        }
-        else {
+            actionButton.setText(ACTION_BTN_FOLLOW);
+            clearButton.setVisible(false);
+        } else {
             mapMode = true;
             modeButton.setText("Camera");
-            actionButton.setText("Go to destination");
+            actionButton.setText(ACTION_BTN_MAP);
+            clearButton.setVisible(true);
         }
         repaint();
     }//GEN-LAST:event_modeButtonActionPerformed
 
     private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed
         if (mapMode) {
-            if (destination != null) {
+            if (destination != null && pathFinder == null) {
                 mainPanel.remove(destination);
                 destination = null;
                 for (MapMarker m : markers) {
                     mainPanel.remove(m);
                 }
                 markers.clear();
+                repaint();
             }
-        }
-        else {
-            if (follower != null) {
-                follower.close();
-                follower = null;
-            }
-            
-            if ( pathFinder != null ) {
-            	pathFinder.close();
-            	pathFinder = null;
-            }
-        }
+        } 
     }//GEN-LAST:event_clearButtonActionPerformed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
         ownCamCapture.stopCapturing();
         camCapture.stopCapturing();
         actionPerformer.close();
-        if (follower != null) follower.close();
-        if (pathFinder != null) pathFinder.close();
+        if (follower != null) {
+            follower.close();
+        }
+        if (pathFinder != null) {
+            pathFinder.close();
+        }
     }//GEN-LAST:event_formWindowClosing
-    
 
     /**
      * @param args the command line arguments
